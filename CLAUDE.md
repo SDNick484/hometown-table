@@ -156,6 +156,8 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 14 (Installer, services, backups and health checks): done
 
+- Task 15 (Visit sync): done
+
 ## Modules
 
 ### Task 2: Places, ownership, standing and Past places
@@ -406,3 +408,32 @@ a new module or ops job needs no edit. The head is plain `sh` (BusyBox): no bash
 - `HEALTH_CHECKS` in `/etc/conf.d/ct210-ops`: `add_health_check` (between the `add_health_check begin/end` markers;
   `tests/test_installer_static.py` runs it on sample files) appends inside the quoted value and keeps `.bak`. The app's
   line is added always; the MCP's only once the service answers, so an unconfigured MCP is not reported down.
+
+### Task 15: Visit sync
+`visit_sync.py` (route-free): `run(con) -> {source: {status, new, logged, duplicate, unmatched}}` (status `off`,
+`no_people`, `ok`, `failed`), `match`, `people`/`set_people`, `status`, `dismiss`, `configured`, `failing`,
+`run_errors`; `SyncError`. Sources `dinner_log` (`/api/restaurant-visits`) and `where_to_eat` (`/feed/visits`), each
+`GET <base><path>?after=<cursor>&limit=200` with a bearer token through `common.http_json`; a source with no URL or no
+token is off. `commands/sync_visits.py` (`sync-visits`, exit 1 on error) and `ops/hometown-sync` (daily, loads
+`/etc/conf.d/hometown` like the scan job).
+- Schema v2 (owner-approved, the first migration): `sync_seen`, keyed `(source, ref)`, statuses `logged`, `duplicate`,
+  `unmatched`, `dismissed`; `extra` is JSON (dish; WTE place_id, address, lat, lng). A ref in it is never logged again,
+  even after its visit is deleted (`visit_id` goes NULL). Settings `DINNER_LOG_URL`, `DINNER_LOG_TOKEN`, `WTE_URL`,
+  `WTE_TOKEN` are read after `ENV_KEYS` is taken and listed in `settings.SYNC_KEYS` instead (conftest asserts it covers
+  every `ENV_KEYS` key and is never edited); `tests/plugins/visit_sync.py` blanks them for every test.
+- A run: one at a time (`meta.sync_running`, stale after an hour); no people in the group (`meta.sync_people`, active
+  only) fetches nothing. Per source: re-try `unmatched` rows, then each page after `meta.sync_cursor_<source>`; each new
+  ref is settled (not a past date or no single place -> `unmatched`; a visit at that place that day -> `duplicate`,
+  linked; else `visits.log` with the group, no ratings, note `Dinner Log: <dish>`, `by` `sync:<source>` -> `logged`),
+  and the cursor moves only after the page is stored. The visit is written before its ledger row, so a crash between
+  them is a same-day duplicate next time, never a second visit. No transaction is held across HTTP.
+- Matching (any standing): Where to Eat by `place.wte_id` (exactly one), else with a pin by `common.names_match` within
+  150 m (a pinless place here by name and town), else by name and town (the address's town, else the area's). Dinner
+  Log by name and `common.town_for(location)`'s town, or name alone when that finds none. Exactly one candidate.
+- A failing source doesn't stop the other; its message goes into `meta.sync_error` (`{source: message}`), the run raises
+  `SyncError`, and `health.problems` adds "visit sync failed" while a configured source's last run failed.
+  `meta.sync_last_<source>` holds the last run's `at`, `status` and counts. 401 and 404 get messages naming the setting.
+- API in `routes/settings.py`: `GET /api/sync`, `GET`/`PUT /api/sync/people` (`{"people": [ids]}`),
+  `POST /api/sync/<source>/<ref>/dismiss` (404 unknown, 409 not unmatched). `settings.js` draws the "Synced visits"
+  section (`data-section="sync"`) and exports `syncSourceLine`, `unmatchedLine` (`tests/settings.test.mjs`).
+- Later edits or deletions in the other apps are not propagated: feeds are read forward only.

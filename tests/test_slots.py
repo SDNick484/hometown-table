@@ -7,9 +7,9 @@ import re
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TASKS = {1: "Scaffold", 2: "Places", 3: "Settings", 4: "Visits", 5: "Opening hours", 6: "Tonight", 7: "Google client",
          8: "OSM client", 9: "Weekly scan", 10: "Inbox", 11: "Lists", 12: "Where to Eat import", 13: "MCP",
-         14: "Installer"}
+         14: "Installer", 15: "Visit sync"}
 README_HEADINGS = {2: "Places", 3: "Settings", 4: "Visits", 6: "Where tonight", 9: "Discovery", 10: "Inbox",
-                   11: "Lists", 12: "Import from Where to Eat", 13: "MCP", 14: "Install"}
+                   11: "Lists", 12: "Import from Where to Eat", 13: "MCP", 14: "Install", 15: "Synced visits"}
 SCREEN_TASKS = (2, 3, 4, 6, 10, 11)
 
 
@@ -38,7 +38,7 @@ def test_claude_md_modules_has_a_heading_per_later_task():
     text = read("CLAUDE.md")
     modules = section(text, "## Modules")
     headings = re.findall(r"^### Task (\d+): .+$", modules, re.M)
-    assert [int(n) for n in headings] == list(range(2, 15))
+    assert [int(n) for n in headings] == list(range(2, 16))
     assert modules.rstrip("\n").splitlines()[-1].strip(), "the file ends inside the last slot, not after it"
 
 
