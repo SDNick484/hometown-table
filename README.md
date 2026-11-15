@@ -29,7 +29,14 @@ _Lands with Task 2._
 _Lands with Task 3._
 
 ## Visits
-_Lands with Task 4._
+Open a place and choose its visits. **Log a visit** with the date (today by default, never a future day), who went
+(you are ticked already), a 1 to 5 star rating and a note for each person if you like, an occasion such as "Riley's
+graduation", and a note for the whole visit. Someone can be on a visit without a rating. Logging a visit takes the
+place off your want-to-try list. Each person's rating of a place is the one from their most recent rated visit, and
+those are what "Tonight" scores with. Deleting a visit asks twice on the page.
+
+"You" means the person whose email you linked in Settings. Without a link, ticking "me" is refused with a message
+that says so. Asking Claude to "log that I went" works the same way.
 
 ## Where tonight
 _Lands with Task 6._

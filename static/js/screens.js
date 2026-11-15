@@ -9,7 +9,7 @@
 // (not built yet)
 
 // --- Task 4: Visits ---
-// (not built yet)
+import "./visits.js";
 
 // --- Task 6: Tonight ---
 // (not built yet)
