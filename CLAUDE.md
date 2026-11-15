@@ -140,7 +140,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 6 (The decider, "Tonight"): planned
 
-- Task 7 (Google Places client and the monthly cap): planned
+- Task 7 (Google Places client and the monthly cap): done
 
 - Task 8 (OpenStreetMap client): planned
 
@@ -179,7 +179,21 @@ spec that is valid but never open.
 Not built yet.
 
 ### Task 7: Google Places client and the monthly cap
-Not built yet.
+`google.py` (the only Google caller; everything goes through `common.http_json`, key in the `X-Goog-Api-Key` header,
+never the URL). `enabled()` is "key set"; without a key `search_ids` returns `([], {})` and `details` returns None,
+with no call, so callers check `enabled()` to tell "off" from "not found".
+- `search_ids(con, *, text, rect=None, included_type=None) -> (ids, {old: new})`: Text Search under the IDs-only mask
+  `places.id,places.movedPlaceId,nextPageToken`, at most 3 pages (Google returns 60 results at most). A moved id stays in
+  `ids`; the move is in the dict. Counts `id_calls`; never capped.
+- `details(con, place_id) -> {name, address, lat, lng, status, type} | None`: Pro tier. One `google_usage.pro_calls` counter
+  per month (`common.month_key()`) covers every Pro call. The check and the increment are one `UPDATE ... WHERE pro_calls < cap`
+  inside `db.transaction`, before the request, so two workers can't pass the cap together. Raises `CapReached` (no request
+  made). A call that errors or answers 404 stays counted (Google may have billed it). None for 404.
+- Callers must not hold a `db.transaction` open when they call `search_ids` or `details` (the counter opens its own).
+- `usage(con) -> {month, pro_calls, id_calls, cap}`; `tidy(con, now=None) -> int` clears the `g_*` columns of candidates
+  whose `g_fetched_at` is 30 days old or more (OSM columns stay). `python3 manage.py tidy` runs it; `ops/hometown-tidy` is
+  the daily cron entry (`su` to `hometown`), which Task 14 installs only if the file exists.
+- Test helpers: `tests/plugins/google.py` (`g_ids_page`, `g_details`); fixtures in `tests/fixtures/google/`.
 
 ### Task 8: OpenStreetMap client
 Not built yet.
