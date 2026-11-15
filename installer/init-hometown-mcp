@@ -1,0 +1,31 @@
+#!/sbin/openrc-run
+# OpenRC service for the Hometown Table MCP (installed to /etc/init.d/hometown-mcp by setup-hometown.sh).
+# It runs in its own venv as its own user, which has no access to the database or the data folder.
+# OpenRC runs this as root, so it can read the root-only config; the service user never reads it.
+# shellcheck shell=sh disable=SC2034
+name="hometown-mcp"
+description="Hometown Table MCP server (Streamable HTTP, behind Cloudflare Access)"
+# shellcheck source=/dev/null
+[ -r /etc/conf.d/hometown ] && . /etc/conf.d/hometown
+: "${HOMETOWN_PORT:=8782}"
+: "${HOMETOWN_URL:=http://127.0.0.1:${HOMETOWN_PORT}}"
+# The service refuses to start at write level none if it can see the write key, so it only gets that key when
+# writes are on. The app's own settings (Google key, Access AUD, ...) deliberately stay out of its environment.
+case "${HOMETOWN_MCP_WRITES:-none}" in
+  log|all) ;;
+  *) unset HOMETOWN_API_KEY ;;
+esac
+export HOMETOWN_URL HOMETOWN_READ_KEY HOMETOWN_API_KEY HOMETOWN_MCP_WRITES MCP_HTTP_PORT MCP_HTTP_PATH MCP_PUBLIC_HOSTS
+export CF_ACCESS_TEAM_DOMAIN CF_ACCESS_AUD MCP_ALLOWED_EMAILS
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=10
+respawn_period=600
+command="/opt/hometown-mcp/venv/bin/python"
+command_args="/opt/hometown/mcp_http.py"
+command_user="hometown-mcp:hometown-mcp"
+directory="/opt/hometown"
+output_log="/var/log/hometown-mcp.log"
+error_log="/var/log/hometown-mcp.log"
+depend() { need net hometown; after firewall; }
+start_pre() { checkpath -f -m 0640 -o hometown-mcp:hometown-mcp /var/log/hometown-mcp.log; }

@@ -154,7 +154,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 13 (MCP server, stdio and remote): planned
 
-- Task 14 (Installer, services, backups and health checks): planned
+- Task 14 (Installer, services, backups and health checks): done
 
 ## Modules
 
@@ -237,4 +237,27 @@ read into the database. Fixture: `tests/fixtures/where_to_eat/export.json` (inve
 Not built yet.
 
 ### Task 14: Installer, services, backups and health checks
-Not built yet.
+`installer/build.sh` writes `dist/setup-hometown.sh` (git-ignored): `installer/setup-head.sh` plus a base64 tarball of
+every top-level `*.py`, `routes/`, `commands/`, `static/`, `ops/`, `requirements-mcp.txt` and the two init scripts, so
+a new module or ops job needs no edit. The head is plain `sh` (BusyBox): no bashisms, no GNU-only flags.
+- `setup-head.sh`: safe to re-run; `--uninstall` removes `/opt/hometown`, `/opt/hometown-mcp`, the services and the
+  cron files but keeps `/var/lib/hometown`, `/etc/conf.d/hometown` and the backups. `/opt/hometown` is replaced each
+  run. `add_setting` only adds a missing key and writes `KEY="value"` (quoted: the init script sources the file). A new
+  setting means a new `add_setting` line (`tests/test_installer_static.py` checks every `settings.ENV_KEYS` and
+  `.env.example` key has one). The two bearer keys are generated once with `genkey` and never printed. The config is
+  `0600 root`. `LAN_EDIT` is added as `0` (the app default), not the `.env.example` development `1`.
+- Packages: `python3 py3-flask py3-gunicorn py3-jwt py3-cryptography sqlite tzdata py3-virtualenv`. The MCP venv
+  (`/opt/hometown-mcp/venv`, from `requirements-mcp.txt`) failing only skips `hometown-mcp`.
+- Cron files are installed only if present in the build (`[ -f ]`): `ops/hometown-backup` daily, `ops/hometown-tidy`
+  daily (Task 7), `ops/hometown-scan` weekly (Task 9). They run as root from `/etc/periodic/`.
+- `installer/init-hometown` (gunicorn, 2 workers, no `--preload`, `${HOMETOWN_BIND:-0.0.0.0}:${HOMETOWN_PORT:-8782}`)
+  and `installer/init-hometown-mcp` are OpenRC runscripts under `supervise-daemon`, and `export` every key their
+  service reads. The MCP script unsets `HOMETOWN_API_KEY` unless `HOMETOWN_MCP_WRITES` is `log` or `all`, because at
+  `none` the service refuses to start when it can see the write key. A new setting the app reads goes in the `export`
+  line of `init-hometown`.
+- `ops/hometown-backup`: `sqlite3 .backup` + `integrity_check`, gzip, to `$LOCAL_DIR/<date>/hometown.db.gz` (mode 0600),
+  `KEEP_DAYS` pruning, optional copy to `$BACKUP_TARGET/db/<date>/`, log and `ct210-notify` as the other CT 210 jobs.
+  It puts the WAL files back to the database's owner if running as root created them.
+- `HEALTH_CHECKS` in `/etc/conf.d/ct210-ops`: `add_health_check` (between the `add_health_check begin/end` markers;
+  `tests/test_installer_static.py` runs it on sample files) appends inside the quoted value and keeps `.bak`. The app's
+  line is added always; the MCP's only once the service answers, so an unconfigured MCP is not reported down.
