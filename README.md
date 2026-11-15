@@ -65,7 +65,30 @@ those are what "Tonight" scores with. Deleting a visit asks twice on the page.
 that says so. Asking Claude to "log that I went" works the same way.
 
 ## Where tonight
-_Lands with Task 6._
+The home screen (**Tonight**) answers "where tonight?" from places that count (or that you're not sure about, marked)
+and are open for business. Sold, closed and temporarily closed places never show up here.
+
+Pick a mode:
+
+- **Not lately** (the start): places the group rates 4 or more on average and hasn't been to for more than `REST_DAYS`
+  days (45 unless you change it), longest gap first.
+- **Want to try**: starred places none of you has been to, oldest star first.
+- **Never been**: everything none of you has been to, newest added first.
+- **New in town**: places the weekly scan found after its first run, that nobody has been to yet.
+- **Occasion**: places with an occasion tag (ticked in Settings), best rated first, however recently you went.
+- **Any**: everything, by name.
+
+**Who's going** (everyone, adults, kids, you, or one person) changes whose visits and ratings count: with only the kids
+going, a place the adults went to last week is still "never been" for them. Each person's latest rating counts, and the
+score is the average of the people going who have rated it. **More filters** narrows by town, cuisine, tag, list and
+whether it's open now (places whose hours aren't known stay in, marked "hours unknown", unless you pick "known hours
+only"). **Everyone liked it** keeps places where everyone going who has rated it gave a 4 or 5. **Near me** asks the
+phone where you are, shows distances and, in Any and Never been, puts the nearest first. **Shuffle** mixes the list
+up; Shuffle again for a different order. Tap a card to open the place. The app remembers your last mode and who's
+going on each phone.
+
+The same ranking answers `GET /api/decide` (`mode`, `audience`, `cuisine`, `town`, `tag`, `list`, `liked_by_all`,
+`near=lat,lng`, `open_now=true|false|strict`, `seed`, `limit` 1 to 50, `offset`) and Claude's "suggest places".
 
 ## Discovery
 _Lands with Task 9._
