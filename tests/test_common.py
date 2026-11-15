@@ -198,7 +198,7 @@ def test_env_example_names_every_setting_and_the_mcp_keys():
     keys = [line.split("=")[0] for line in lines if "=" in line and not line.startswith("#")]
     mcp = ("HOMETOWN_MCP_WRITES", "MCP_HTTP_PORT", "MCP_HTTP_PATH", "MCP_PUBLIC_HOSTS", "CF_ACCESS_TEAM_DOMAIN",
            "CF_ACCESS_AUD", "MCP_ALLOWED_EMAILS", "HOMETOWN_URL")
-    assert set(settings.ENV_KEYS) | set(mcp) <= set(keys)
+    assert set(settings.ENV_KEYS) | set(settings.SYNC_KEYS) | set(mcp) <= set(keys)
     for i, line in enumerate(lines):
         if "=" in line and not line.startswith("#"):
             assert i > 0 and lines[i - 1].startswith("#"), f"{line}: needs a comment line above it"

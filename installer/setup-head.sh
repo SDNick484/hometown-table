@@ -107,6 +107,11 @@ add_setting "$CONF" SCAN_TILE_KM "" "Scan tile size in km (empty: 1.5)"
 add_setting "$CONF" SCAN_MIN_TILE_KM "" "Smallest tile a full tile is split down to, in km (empty: 0.25)"
 add_setting "$CONF" SCAN_TYPES "" "Google place types the scan searches, comma separated (empty: restaurant)"
 add_setting "$CONF" CLOSURE_CHECK_DAYS "" "Re-check a place's Google business status after this many days (empty: 28)"
+# Synced visits (daily): a source with no URL or no token is off
+add_setting "$CONF" DINNER_LOG_URL "" "Dinner Log base URL, e.g. https://dinner.example.com (empty: no visits synced from it)"
+add_setting "$CONF" DINNER_LOG_TOKEN "" "Bearer token of Dinner Log's visit feed"
+add_setting "$CONF" WTE_URL "" "Where to Eat base URL (empty: no visits synced from it)"
+add_setting "$CONF" WTE_TOKEN "" "Bearer token of Where to Eat's visit feed"
 # The MCP service (hometown-mcp)
 add_setting "$CONF" HOMETOWN_MCP_WRITES none "MCP write level: none, log (log visits, star places) or all"
 add_setting "$CONF" MCP_HTTP_PORT "$MCP_PORT" "Port the MCP service listens on"

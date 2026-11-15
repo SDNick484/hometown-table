@@ -52,7 +52,8 @@ def test_json_holds_everything(editor, con):
     assert "attachment" in r.headers["Content-Disposition"]
     data = json.loads(r.get_data(as_text=True))
     assert {"exported_at", "schema_version"} <= set(data)
-    for table in BASICS + ("place_event", "place_tag", "source_list", "list_entry", "candidate", "scan_run", "google_usage"):
+    for table in BASICS + ("place_event", "place_tag", "source_list", "list_entry", "candidate", "scan_run", "google_usage",
+                                "sync_seen"):
         assert table in data["tables"], table
     assert [p["name"] for p in data["tables"]["place"]] == ["Casa Ejemplo", "Pho Example"]
     assert len(data["tables"]["visit_person"]) == 3

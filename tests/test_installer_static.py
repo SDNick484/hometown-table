@@ -41,7 +41,7 @@ def sh_n(path):
 def test_every_setting_has_an_add_setting_line():
     head = read(HEAD)
     added = set(re.findall(r'^add_setting "\$CONF" ([A-Z][A-Z0-9_]*) ', head, re.M))
-    wanted = set(settings.ENV_KEYS) | set(env_example_keys())
+    wanted = set(settings.ENV_KEYS) | set(settings.SYNC_KEYS) | set(env_example_keys())
     assert wanted - added == set(), "settings the installer never writes to the config"
     assert set(MCP_KEYS) <= added
 
@@ -94,7 +94,7 @@ def test_services_use_supervise_daemon_and_the_right_ports():
 def test_init_scripts_export_the_keys_their_service_reads():
     def exported(text):
         return set(" ".join(re.findall(r"^export (.+)$", text, re.M)).split())
-    assert set(settings.ENV_KEYS) <= exported(read(INIT_APP))
+    assert set(settings.ENV_KEYS) | set(settings.SYNC_KEYS) <= exported(read(INIT_APP))
     assert set(MCP_KEYS) | {"HOMETOWN_READ_KEY", "HOMETOWN_API_KEY"} <= exported(read(INIT_MCP))
 
 

@@ -4,6 +4,7 @@ import textwrap
 from flask import Flask
 
 import app as hometown
+import db
 import manage
 import settings
 from common import ApiError
@@ -86,7 +87,7 @@ def test_init_hooks_run_after_migrate(monkeypatch):
     seen = []
     monkeypatch.setattr(hometown, "INIT_HOOKS", [lambda con: seen.append(con.execute("PRAGMA user_version").fetchone()[0])])
     hometown.init_db()
-    assert seen == [1]
+    assert seen == [db.SCHEMA_VERSION] == [2]
 
 
 def test_index_uses_app_name(editor, monkeypatch):
