@@ -14,7 +14,7 @@ import "./settings.js";
 import "./visits.js";
 
 // --- Task 6: Tonight ---
-// (not built yet)
+import "./tonight.js";
 
 // --- Task 10: Inbox and Add place ---
 // (not built yet)

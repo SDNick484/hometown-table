@@ -138,7 +138,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 5 (Opening-hours parser): done
 
-- Task 6 (The decider, "Tonight"): planned
+- Task 6 (The decider, "Tonight"): done
 
 - Task 7 (Google Places client and the monthly cap): done
 
@@ -214,7 +214,29 @@ the next day), `off`, `24/7`, `;`-separated rules where a later rule replaces ea
 spec that is valid but never open.
 
 ### Task 6: The decider ("Tonight")
-Not built yet.
+`decide.py` is the one ranking function (page, `GET /api/decide`, and Task 13's `suggest_places`). `MODES`,
+`parse_params(args) -> dict` (a MultiDict, MCP kwargs, or its own output; unknown keys ignored; raises `ParamError`, an
+`ApiError` 400), `decide(con, params, me_person_id=None, now=None) -> {mode, total, places}` (raw params are parsed
+again; `now` is epoch seconds or a datetime, naive = LA local), `audience_ids(con, audience, me_person_id)`, `choices(con)`.
+- Eligible is `ownership IN (counts, unsure) AND standing = 'open'`, applied in SQL before anything else: no mode or
+  filter can reach a sold, closed or temporarily closed place. A `closure_flag` alone doesn't hide a place.
+- Audiences are active people only: `everyone`, `adults`, `kids`, `me` (400 "Link your email to a person in Settings."),
+  or one active person's folded name (400 "No one called <name>."). "Visited" and "last visit" mean a visit with anyone in
+  the audience on it; the score is `visits.score` over the audience. `new_in_town` alone uses "never visited by anyone".
+- `not_lately`: score >= 4 and the audience's last visit more than `REST_DAYS` days before today (LA). `new_in_town`:
+  `origin = 'scan'` and `place.first_seen_at > meta.baseline_at` (epoch seconds as text, as `meta.created_at`); no
+  baseline means nothing is new. `tag` and `list` take ids or folded names, repeat, and every one must match; `list` reads
+  `list_entry.place_id`. `town` must be one of `TOWNS` (any case). `open_now`: `true` keeps unknown hours, `strict` doesn't.
+- Order: the mode's order (name, then id, breaks ties), then distance for `any`/`never_been` with `near` (no pin last),
+  then `random.Random(seed).shuffle` (a digit-string seed is an int, so `"7"` and `7` agree), then `offset`/`limit`.
+- A card's `last_visit` is `{on, people: [{name, rating}]}` for the audience's newest visit (everyone on that visit, with
+  that visit's ratings); `tags` are `[{id, label}]`; `score` is rounded to 2 places; `distance_km` (km, 2 places, None
+  without a pin) is present only with `near`; `closes_at` only when open.
+- `GET /api/decide/choices` (not in the plan): modes, towns, cuisines of eligible places (one spelling per folded value),
+  tags, lists (read straight from `source_list`), active people. Feeds the filter row.
+- `static/js/tonight.js` is `#/` (nav "Tonight" 10). Its state lives in the address (`#/?mode=any&seed=7`, written with
+  `history.replaceState`, so no re-render) and the mode and audience also in `localStorage` (`hometown.tonight.mode`,
+  `.audience`; every access in try/catch). Changing mode drops the seed. `tests/tonight.test.mjs` covers its helpers.
 
 ### Task 7: Google Places client and the monthly cap
 `google.py` (the only Google caller; everything goes through `common.http_json`, key in the `X-Goog-Api-Key` header,
