@@ -1,0 +1,27 @@
+{
+ "exported": "2026-11-01T09:00:00",
+ "places": [
+  {"id": 101, "name": "Casa Ejemplo", "area": "Concord", "neighborhood": "Downtown", "address": "1 Example Way, Concord, CA 94520",
+   "cuisine": "Mexican", "website": "https://example.com/casa", "phone": "925-555-0101", "hours": "Mon-Sun 11:00-21:00",
+   "price_level": 2, "rating": 4.5, "notes": "Ask for the green salsa", "private_notes": "Alex's birthday spot", "closed": 0,
+   "lat": 37.9781, "lng": -122.0312, "geo_tried": 1, "added_by": "alex@example.com", "created_at": "2025-01-01 10:00:00"},
+  {"id": 102, "name": "Pho Example", "area": "Martinez", "address": "2 Example Way, Martinez, CA 94553",
+   "cuisine": "Vietnamese", "website": null, "phone": null, "hours": null, "notes": null, "private_notes": null, "closed": 1,
+   "lat": 38.0195, "lng": -122.1342, "geo_tried": 1},
+  {"id": 103, "name": "Chain Burger Example", "area": "San Francisco", "address": "3 Example Way, San Francisco, CA 94103",
+   "cuisine": "Burgers", "website": "https://example.com/burger", "phone": "415-555-0103", "hours": null, "notes": null,
+   "private_notes": null, "closed": 0, "lat": 37.7749, "lng": -122.4194, "geo_tried": 1},
+  {"id": 104, "name": "Taqueria Muestra", "area": "Clayton", "address": "4 Example Way, Clayton, CA 94517",
+   "cuisine": "Mexican", "website": null, "phone": "925-555-0104", "hours": "Tue-Sun 10:00-20:00", "notes": "Cash only",
+   "private_notes": "Sam likes it", "closed": 0, "lat": 37.9411, "lng": -121.9359, "geo_tried": 1},
+  {"id": 105, "name": "Noodle Ejemplo", "area": "Lafayette", "address": "5 Example Way, Lafayette, CA 94549",
+   "cuisine": "Chinese", "website": null, "phone": null, "hours": null, "notes": null, "private_notes": null, "closed": 0,
+   "lat": null, "lng": null, "geo_tried": 0}
+ ],
+ "items": [
+  {"id": 1, "place_id": 101, "name": "Carne asada burrito", "price": 12.5, "kind": "item", "favorite": 1}
+ ],
+ "photos": [
+  {"id": 1, "place_id": 101, "file": "casa.jpg", "caption": "Front", "pos": 0}
+ ]
+}

@@ -44,7 +44,17 @@ _Lands with Task 10._
 _Lands with Task 11._
 
 ## Import from Where to Eat
-_Lands with Task 12._
+One time, to seed the inbox from the list you already keep in Where to Eat. In Where to Eat choose **More, Download,
+JSON**, copy the file to the host, and run as the `hometown` user:
+
+```
+python3 /opt/hometown/manage.py import-where-to-eat export.json
+```
+
+Open places in the eight towns (by map pin, or by the town named in their area) land in the Inbox as new candidates.
+Closed places, places elsewhere, and places already here (same Where to Eat id, or the same name within 150 m) are
+skipped, and the command prints how many of each. Running it again creates nothing. Dishes, photos and notes stay in
+Where to Eat.
 
 ## MCP
 _Lands with Task 13._

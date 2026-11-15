@@ -150,7 +150,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 11 (Curated lists): planned
 
-- Task 12 (Import from Where to Eat): planned
+- Task 12 (Import from Where to Eat): done
 
 - Task 13 (MCP server, stdio and remote): planned
 
@@ -194,7 +194,13 @@ Not built yet.
 Not built yet.
 
 ### Task 12: Import from Where to Eat
-Not built yet.
+`wte_import.run(con, export) -> {"created", "skipped_closed", "skipped_outside", "skipped_existing"}` (one transaction);
+`commands/import_where_to_eat.py` (`import-where-to-eat <path>`) prints the counts. Per place, in order: `closed` ->
+skipped_closed; pin not within a town's radius and `area` not a town name -> skipped_outside; same `wte_id` in
+`place` or `candidate` (any status, so a dismissed one stays dismissed), or within 150 m of a place or candidate with
+`common.names_match` -> skipped_existing; else a `where_to_eat` candidate, status `new`, `wte_id`, and `wte_json`
+holding only name, address, cuisine, phone, website, hours, lat, lng. Dishes, photos, notes and private notes are never
+read into the database. Fixture: `tests/fixtures/where_to_eat/export.json` (invented).
 
 ### Task 13: MCP server (stdio and remote)
 Not built yet.
