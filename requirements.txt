@@ -1,0 +1,6 @@
+# Runtime. On the Alpine container these come from apk, never pip: py3-flask py3-gunicorn py3-jwt py3-cryptography
+# (plus tzdata, for America/Los_Angeles, and sqlite, for the backup's sqlite3 command).
+flask>=3.0
+gunicorn>=21
+pyjwt>=2.8
+cryptography>=41

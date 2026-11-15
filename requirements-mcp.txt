@@ -1,0 +1,4 @@
+# The hometown-mcp service's own venv (/opt/hometown-mcp/venv). The app never imports these.
+mcp>=2.3,<3
+uvicorn>=0.31
+pyjwt[crypto]>=2.10
