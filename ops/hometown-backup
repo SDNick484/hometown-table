@@ -1,0 +1,61 @@
+#!/bin/sh
+# Nightly backup of the Hometown Table database (installed to /etc/periodic/daily by setup-hometown.sh). It runs
+# next to the other CT 210 backups, with the same settings, folder and log:
+#   $LOCAL_DIR/<date>/hometown.db.gz            consistent `sqlite3 .backup` copy, kept KEEP_DAYS days
+#   $BACKUP_TARGET/db/<date>/hometown.db.gz     also copied there if BACKUP_TARGET is set
+# The database holds the family's visit history: the copies are readable by root only.
+# Config: /etc/conf.d/ct210-ops (KEEP_DAYS, LOCAL_DIR, BACKUP_TARGET)   Log: /var/log/ct210-ops.log
+# OPS_CONF, DATA_DIR and LOG may be overridden for a test run.
+set -u
+umask 077
+OPS_CONF=${OPS_CONF:-/etc/conf.d/ct210-ops}
+# shellcheck source=/dev/null
+[ -f "$OPS_CONF" ] && . "$OPS_CONF"
+LOCAL_DIR=${LOCAL_DIR:-/var/backups/ct210}
+KEEP_DAYS=${KEEP_DAYS:-14}
+BACKUP_TARGET=${BACKUP_TARGET:-}
+DATA_DIR=${DATA_DIR:-/var/lib/hometown}
+LOG=${LOG:-/var/log/ct210-ops.log}
+STAMP=$(date +%Y-%m-%d)
+DB=$DATA_DIR/hometown.db
+log() { echo "$(date '+%F %T') hometown-backup: $*" >> "$LOG" 2>/dev/null || true; }
+
+[ -f "$DB" ] || { log "no database at $DB yet, nothing to back up"; exit 0; }
+
+fail=0
+mkdir -p "$LOCAL_DIR/$STAMP"
+out="$LOCAL_DIR/$STAMP/hometown.db"
+rm -f "$out" "$out.gz"
+if sqlite3 "$DB" ".backup '$out'" && [ "$(sqlite3 "$out" 'PRAGMA integrity_check;')" = "ok" ]; then
+  gzip -f "$out"
+  log "ok hometown.db ($(du -h "$out.gz" | cut -f1))"
+else
+  rm -f "$out"
+  log "FAILED hometown.db"; fail=1
+fi
+# Opened as root with the service stopped, SQLite may have made the WAL files; they must stay the service's.
+if [ "$(id -u)" = 0 ]; then
+  owner=$(stat -c %u:%g "$DB" 2>/dev/null || true)
+  if [ -n "$owner" ]; then
+    for f in "$DB-wal" "$DB-shm"; do [ -e "$f" ] && chown "$owner" "$f"; done
+  fi
+fi
+find "$LOCAL_DIR" -mindepth 1 -maxdepth 1 -type d -mtime +"$KEEP_DAYS" -exec rm -rf {} \; 2>/dev/null
+
+if [ -n "$BACKUP_TARGET" ]; then
+  if [ -d "$BACKUP_TARGET" ] && [ -w "$BACKUP_TARGET" ]; then
+    mkdir -p "$BACKUP_TARGET/db/$STAMP"
+    if [ -f "$out.gz" ] && cp -p "$out.gz" "$BACKUP_TARGET/db/$STAMP/hometown.db.gz"; then
+      log "hometown copied to $BACKUP_TARGET"
+    else
+      log "FAILED: could not copy to $BACKUP_TARGET"; fail=1
+    fi
+  else
+    log "FAILED: BACKUP_TARGET $BACKUP_TARGET is not a writable directory (is it mounted?)"; fail=1
+  fi
+fi
+
+if [ "$fail" != 0 ] && [ -x /usr/local/bin/ct210-notify ]; then
+  /usr/local/bin/ct210-notify "Hometown Table backup" down "Last night's Hometown Table backup had a problem. See $LOG."
+fi
+exit "$fail"

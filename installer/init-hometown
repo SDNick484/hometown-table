@@ -1,0 +1,23 @@
+#!/sbin/openrc-run
+# OpenRC service for the Hometown Table app (installed to /etc/init.d/hometown by setup-hometown.sh).
+# OpenRC loads /etc/conf.d/hometown; every setting the app reads is exported from here.
+# shellcheck shell=sh disable=SC2034
+name="hometown"
+description="Hometown Table (gunicorn)"
+: "${HOMETOWN_PORT:=8782}"
+: "${HOMETOWN_BIND:=0.0.0.0}"
+: "${DATA_DIR:=/var/lib/hometown}"
+export HOME=/var/lib/hometown  # newer gunicorn keeps a small control socket under $HOME
+export DATA_DIR HOMETOWN_PORT APP_NAME TOWNS TOWN_RADIUS_KM REST_DAYS CF_TEAM_DOMAIN CF_AUD ADMIN_EMAILS LAN_EDIT
+export HOMETOWN_READ_KEY HOMETOWN_API_KEY GOOGLE_PLACES_KEY GOOGLE_MAX_PRO_PER_MONTH GOOGLE_PREFILL SCAN_TILE_KM
+export SCAN_MIN_TILE_KM SCAN_TYPES CLOSURE_CHECK_DAYS
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=10
+respawn_period=600
+command="/usr/bin/gunicorn"
+# No --preload: each worker imports the app and runs the idempotent start hooks itself (db.migrate is safe to race).
+command_args="--workers 2 --threads 4 --timeout 120 --bind ${HOMETOWN_BIND:-0.0.0.0}:${HOMETOWN_PORT:-8782} --chdir /opt/hometown --access-logfile /var/log/hometown.log --error-logfile /var/log/hometown.log app:app"
+command_user="hometown:hometown"
+depend() { need net; after firewall; }
+start_pre() { checkpath -f -m 0640 -o hometown:hometown /var/log/hometown.log; }
