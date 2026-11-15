@@ -1,0 +1,4 @@
+{"type": "FeatureCollection", "features": [
+ {"type": "Feature", "geometry": {"type": "Point", "coordinates": [-122.0301, 37.9791]},
+  "properties": {"osm_type": "N", "osm_id": 5005, "type": "house", "housenumber": "200", "street": "Example Street", "city": "Concord", "state": "California", "postcode": "94520", "country": "United States"}}
+]}
