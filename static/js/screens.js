@@ -20,4 +20,4 @@ import "./visits.js";
 // (not built yet)
 
 // --- Task 11: Lists ---
-// (not built yet)
+import "./lists.js";

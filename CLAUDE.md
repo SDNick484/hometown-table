@@ -148,7 +148,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 10 (Inbox, flags and Add place): planned
 
-- Task 11 (Curated lists): planned
+- Task 11 (Curated lists): done
 
 - Task 12 (Import from Where to Eat): done
 
@@ -252,7 +252,26 @@ Not built yet.
 Not built yet.
 
 ### Task 11: Curated lists
-Not built yet.
+`lists.py` (route-free; the module defines `all`, so it never calls the builtin) and `routes/lists.py`; the plan's
+signatures. `clean_line` strips bullets and numbering and cuts at the first ` - `, ` – `, ` — ` or `: ` after a name.
+- `import_lines` (up to 200 cleaned lines, 400 over; a line over 200 characters is 400): a line repeated in another
+  case counts once. Google is called first for every line with no folded-name hit, with no transaction open
+  (google.py's rule), then everything is written in one transaction. A line resolves to: a place or candidate whose
+  name has the same `common.name_words` set (equal, not a subset: "Taco" must not match every taqueria) -> else
+  `google.search_ids(text=line, rect=<bounding box of every town box>)`, first id (a moved id is followed) -> a place
+  with that `google_place_id`, else a candidate with it, else a new candidate (`origin list`, status `new`, only the id:
+  no Pro call is spent, so the inbox shows the pasted line until details arrive).
+- A found candidate: `backlog` or `dismissed` goes back to `new` (`decided_at` cleared); `chain_hidden` stays hidden;
+  `accepted` links its place; `new` and `pending` are left alone. A Google failure keeps that line and the rest
+  unmatched (no more calls that import); no key, no results and a failure are all "unmatched".
+- Counts: `matched_places` (a place, directly or through an accepted candidate), `new_candidates`, `linked_candidates`,
+  `unmatched`, `unmatched_lines` (strings). A line already on the list is counted but not added twice.
+- `get()` returns `{list, places, candidates, unmatched}`: a candidate entry that was later accepted shows under places
+  (the entry reaches the place through `candidate.place_id`); `unmatched` is `[{id, line}]` (`id` is the entry id).
+  `all()` rows carry `places`, `candidates`, `unmatched` counts. `retry(con, entry_id, text)` answers like an import (409
+  if the entry is already matched); `drop` deletes the entry; `delete` removes the list and its entries only.
+- Routes: `POST /api/lists` `{name, url, get_or_create}` (201, or 200 for an existing list with `get_or_create`);
+  `DELETE` answers 204. Screens: `lists.js` (`#/lists` nav 30, `#/lists/:id`), exports `importSummary`.
 
 ### Task 12: Import from Where to Eat
 `wte_import.run(con, export) -> {"created", "skipped_closed", "skipped_outside", "skipped_existing"}` (one transaction);
