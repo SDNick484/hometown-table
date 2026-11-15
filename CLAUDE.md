@@ -136,7 +136,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 4 (Visits and ratings): planned
 
-- Task 5 (Opening-hours parser): planned
+- Task 5 (Opening-hours parser): done
 
 - Task 6 (The decider, "Tonight"): planned
 
@@ -168,7 +168,12 @@ Not built yet.
 Not built yet.
 
 ### Task 5: Opening-hours parser
-Not built yet.
+`hours.py`, standard library only. `open_at(spec, when) -> bool|None`, `closes_at(spec, when) -> str|None` ("9 pm",
+"9:30 pm"; None unless open now and it closes within a week) and `parse(spec) -> [(weekday 0=Mo, start_min, end_min)]|None`.
+`when` is a naive datetime in LA local time. Subset: day ranges/lists, several time ranges, past-midnight (split onto
+the next day), `off`, `24/7`, `;`-separated rules where a later rule replaces earlier ones for its days. Anything else
+(`PH`, months, week numbers, `sunrise`) makes the whole spec unknown (None), never a guess. `parse` returns `[]` for a
+spec that is valid but never open.
 
 ### Task 6: The decider ("Tonight")
 Not built yet.
