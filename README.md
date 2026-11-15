@@ -39,7 +39,20 @@ has saved first stops with "Someone else just changed this place. Reload to see 
 close to one with the same name shows the existing one and needs an explicit "Add anyway".
 
 ## Settings
-_Lands with Task 3._
+Open **Settings** from the header.
+
+- **People.** Add each person who eats out with you, as an adult or a kid. Names must be different, can't be
+  `everyone`, `adults` or `kids`, can't hold a comma and can't be only digits. An editor's email on a person links
+  them to that sign-in, so the visit form starts with them ticked and "me" means them. The email has to be one of
+  `ADMIN_EMAILS`. Someone who has been on a visit can't be deleted; Remove makes them inactive, and Reactivate
+  brings them back.
+- **Tags.** Six start out: good for groups, private room, special occasion, takes reservations, kid-friendly and show off
+  to guests. Rename, reorder, add or delete them. A ticked tag is an occasion tag: the "Occasion" mode on Tonight picks
+  places that have one. Deleting a tag says how many places it is on first.
+- **Status.** The towns, rest days, whether the Google key is set (never the key itself), this month's Google calls
+  and the last weekly scan.
+- **Export.** `/api/export.json` holds everything; `/api/export.csv` has one row per person on each visit
+  (place, town, ownership, date, occasion, person, rating, their note).
 
 ## Visits
 Open a place and choose its visits. **Log a visit** with the date (today by default, never a future day), who went

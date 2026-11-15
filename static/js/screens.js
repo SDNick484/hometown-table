@@ -8,7 +8,7 @@ import "./place-edit.js";
 import "./past.js";
 
 // --- Task 3: Settings ---
-// (not built yet)
+import "./settings.js";
 
 // --- Task 4: Visits ---
 import "./visits.js";
