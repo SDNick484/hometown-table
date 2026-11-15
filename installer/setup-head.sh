@@ -14,7 +14,7 @@ CONF=/etc/conf.d/hometown
 OPS_CONF="${OPS_CONF:-/etc/conf.d/ct210-ops}"
 SVC_USER=hometown
 MCP_USER=hometown-mcp
-CRONS="daily/hometown-backup daily/hometown-tidy weekly/hometown-scan"
+CRONS="daily/hometown-backup daily/hometown-tidy daily/hometown-sync weekly/hometown-scan"
 
 if [ "$(id -u)" != 0 ]; then echo "Run as root"; exit 1; fi
 command -v apk >/dev/null || { echo "This installer is for Alpine (apk)."; exit 1; }

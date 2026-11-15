@@ -67,7 +67,7 @@ def test_head_installs_the_packages_and_keeps_data():
 def test_crons_are_installed_only_when_the_file_exists():
     head = read(HEAD)
     crons = re.search(r'^CRONS="([^"]+)"', head, re.M).group(1).split()
-    assert crons == ["daily/hometown-backup", "daily/hometown-tidy", "weekly/hometown-scan"]
+    assert crons == ["daily/hometown-backup", "daily/hometown-tidy", "daily/hometown-sync", "weekly/hometown-scan"]
     assert re.search(r'if \[ -f "\$APP_DIR/ops/\$job" \]; then install -m 755 .*"/etc/periodic/\$c"', head)
 
 
