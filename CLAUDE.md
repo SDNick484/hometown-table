@@ -146,7 +146,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 9 (The weekly scan): planned
 
-- Task 10 (Inbox, flags and Add place): planned
+- Task 10 (Inbox, flags and Add place): done
 
 - Task 11 (Curated lists): planned
 
@@ -249,7 +249,31 @@ A place dict is `{ref "node/123", name, address, lat, lng, cuisine, phone, websi
 Not built yet.
 
 ### Task 10: Inbox, flags and Add place
-Not built yet.
+`inbox.py` (route-free): `rows`, `counts`, `accept`, `dismiss`, `unhide`, `confirm_flag`, `dismiss_flag`, `lookup`, plus
+`town_box(town)` / `area_box()` (a town's centre +- its radius, as `(south, west, north, east)`) and `find_town(name)`.
+- `rows(con, tab, offset, limit)`: tabs `new|backlog|chain_hidden` (candidates, `first_seen_at` newest first) and
+  `flags` (places with `closure_flag`); `pending`, `dismissed`, `accepted` never show. A row carries `osm`, `wte` and
+  `google` parts plus display `name`/`address` with `name_from`/`address_from` (`osm`, `where_to_eat`, `google`: the UI
+  labels Google values "Google Maps"). Only a row on the page with a `google_place_id`, no `osm_ref`, and an empty or
+  30-day-old cache re-fetches `google.details` (and re-caches it, a 404 too); at the cap its `note` is
+  `inbox.CAP_NOTE`. `GET /api/inbox?tab=&offset=&limit=` (limit 0..50, 0 = counts only, which the nav uses) adds
+  `google` and `prefill`.
+- `accept(con, id, data, by)`: base fields from OSM (`osm_extra` keys `cuisine`, `phone`, `website`, `opening_hours`),
+  a `where_to_eat` candidate's `wte_json` first; never `g_*`. A field override is a value or `{"from_google": true}`,
+  allowed only for `name` and `address` and only with `GOOGLE_PREFILL` (else 400); the value is the fresh cache or a
+  live counted `details` call. The pin is never Google's: no pin -> `osm.geocode` of the confirmed address (a failure
+  saves without one). The candidate is claimed (`status` -> `accepted`) before `places.create` and restored if that
+  fails; then `place_id` is set and `list_entry.place_id` follows. `tags` or `tag_ids`, `want_to_try`, `add_anyway`.
+- `confirm_flag` -> `places.set_standing` (`CLOSED_PERMANENTLY` -> `closed`, `CLOSED_TEMPORARILY` -> `temp_closed`,
+  reason "Google lists it as closed"); `dismiss_flag` moves `closure_flag` into `closure_dismissed`. 409 with no flag.
+- `lookup(con, name, town)`: one `osm.search` in the town's (or the whole area's) box, then with a key
+  `google.search_ids` + `details` for the top three; a Google result within 100 m of an OSM one with a matching name
+  adds its id to it. Results carry `source`, `in_list` (place id), `in_inbox` (candidate id), `inbox_status`; failures
+  and the cap become `notes`, never an error.
+- `routes/inbox.py` also has `GET /api/geocode?address=&town=` (Add place's pin for a typed address; not in the plan).
+- Screens: `inbox.js` (`#/inbox?tab=`, nav 20, `refreshNavCount()`), `add.js` (`#/add`, `?name=` runs the lookup; it
+  exports the place form `renderPlaceForm`/`readPlaceForm`/`wireGoogleHints` that the inbox reuses). A pick that is
+  already a candidate saves through `/api/inbox/<id>/accept`; others through `POST /api/places` (origin `hand`).
 
 ### Task 11: Curated lists
 Not built yet.

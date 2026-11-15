@@ -71,7 +71,30 @@ _Lands with Task 6._
 _Lands with Task 9._
 
 ## Inbox
-_Lands with Task 10._
+**Inbox** (the header link; it shows how many are new) holds what the weekly scan, your lists and the Where to Eat
+import found, waiting for you to decide. Tabs: **New**, **Backlog** (what the first scan found), **Flags** (places
+Google lists as closed) and, collapsed at the bottom, **Hidden as chains** (OpenStreetMap tags them with a brand).
+
+Each entry shows its name, address and town, whether it matched an OpenStreetMap entry, a chain hint, Google's type for
+it and the lists it came from. Choose **Counts**, **Not sure** or **Doesn't count** to open the form: the place's
+details come from OpenStreetMap (or from Where to Eat), and the reason starts as "on" and the list's name when it came
+from one. Change anything, tick **Want to try** or tags, and add it. *Doesn't count* still adds the place, straight into
+Past places, so the next scan doesn't offer it again. **Not a restaurant / not ours** takes it out of the inbox for
+good. A hidden chain that isn't one can be moved to New.
+
+Google's terms say its details may not be kept, so values from Google are marked **Google Maps** and are never saved
+unless you tap **Use this** beside a box OpenStreetMap left empty (only the name and the address; set
+`GOOGLE_PREFILL=0` to turn the button off and type them instead). The map pin is OpenStreetMap's, or your address looked
+up when you save, never Google's. When this month's Google calls are used up, an entry says "Google details wait for
+next month." and keeps its place in the list.
+
+On **Flags**, **Confirm** marks the place closed (or temporarily closed) with "Google lists it as closed" in its
+history; **Dismiss** clears the flag until Google's status for it changes.
+
+**Add place** (on the Inbox screen) looks a name up in OpenStreetMap, within one town or all of them, and with a Google
+key also in Google (its top three, which count against the month's calls). Results already on your list link to the
+place; one waiting in the inbox (even one dismissed long ago) is sorted from here. Pick one, or fill the form in
+yourself, then save with a verdict (*Not sure* to start) and a reason.
 
 ## Lists
 _Lands with Task 11._

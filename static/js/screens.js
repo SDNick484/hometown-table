@@ -17,7 +17,8 @@ import "./visits.js";
 // (not built yet)
 
 // --- Task 10: Inbox and Add place ---
-// (not built yet)
+import "./inbox.js";
+import "./add.js";
 
 // --- Task 11: Lists ---
 // (not built yet)
