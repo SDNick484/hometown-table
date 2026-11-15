@@ -130,7 +130,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 1 (Scaffold, schema, access, gate and shared files): done
 
-- Task 2 (Places, ownership, standing and Past places): planned
+- Task 2 (Places, ownership, standing and Past places): done
 
 - Task 3 (People, tags, export and Settings): planned
 
@@ -159,7 +159,25 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 ## Modules
 
 ### Task 2: Places, ownership, standing and Past places
-Not built yet.
+- `places.py` (route-free, takes a `Connection`): `create`, `get`, `update`, `set_ownership`, `set_standing`, `delete`,
+  `search`, `past`, `set_tags`, `set_want_to_try`; the plan's signatures. `routes/places.py` is the thin layer.
+- Ownership and standing change only through `set_ownership` / `set_standing` (a reason is required: 400 "Give a
+  reason."; `on` is an optional past date, default today). Each real change writes a `place_event` and bumps `version`;
+  `set_standing` also stamps `standing_since` and clears `closure_flag`. Setting the value a place already has writes no
+  event (ownership still updates its reason). `update` refuses `ownership`, `standing` and `ownership_reason` (400).
+- A place creation writes no `place_event`: history is changes. `past()` therefore dates a place that arrived closed or
+  not counting by its own `standing_since` / `created_at` and `ownership_reason`.
+- `get()` returns every column plus `tags`, `lists`, `history` (newest first: `{kind, old, new, reason, on, by}`),
+  `last_visit` and `visit_count`. Lists are `{"places": [...]}`: `GET /api/places?q=&past=1&limit=` (folded over name,
+  cuisine, town, address, notes, every word must match) and `GET /api/past` (adds `kind` "closed"|"ownership", `since`,
+  `reason`, `visit_count`).
+- Bodies: `PATCH /api/places/<id>` needs `version`; `POST .../ownership|standing` `{value, reason, on?}`;
+  `PUT .../tags` `{tag_ids}`; `PUT .../want` `{on}` (`want_to_try` also accepted); `DELETE` answers 204 with no body, which
+  `api.js` reports as an `ApiError` with status 204 (place.js treats that as success).
+- Duplicate guard: 150 m and `common.names_match`, 409 `{duplicate_of}`, `add_anyway` overrides. A place's `google_place_id`
+  collision is 409.
+- Screens: `place.js` (`#/p/:id`, exports label maps and `eventTitle`), `place-edit.js` (`#/p/:id/edit`; tag boxes appear
+  only if `GET /api/tags` answers), `past.js` (`#/past`, nav 40, exports `pastLine`).
 
 ### Task 3: People, tags, export and Settings
 Not built yet.

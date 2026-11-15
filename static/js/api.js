@@ -3,7 +3,7 @@
 // included). The browser adds the Origin itself.
 //
 // Failures throw an ApiError with `status`, `error` (the server's message, ready to show) and `data` (the whole JSON
-// answer, e.g. { error, duplicate_of } for a 409).
+// answer, e.g. { error, duplicate_of } for a 409). A 204 (No Content) resolves to null.
 
 export class ApiError extends Error {
   constructor(status, error, data = null) {
@@ -32,6 +32,7 @@ async function request(method, path, body) {
   } catch {
     throw new ApiError(0, OFFLINE);
   }
+  if (res.status === 204) return null;
   let data = null;
   try {
     data = await res.json();

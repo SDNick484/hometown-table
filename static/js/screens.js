@@ -3,7 +3,9 @@
 // edits another block or adds one (plan: Shared files).
 
 // --- Task 2: Places ---
-// (not built yet)
+import "./place.js";
+import "./place-edit.js";
+import "./past.js";
 
 // --- Task 3: Settings ---
 // (not built yet)
