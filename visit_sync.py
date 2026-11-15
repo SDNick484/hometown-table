@@ -176,8 +176,9 @@ def match(con, source, name, location, extra) -> int | None:
 
     Where to Eat: the place whose wte_id is the entry's place_id; else, with a pin, the one place whose name matches
     (common.names_match) within 150 m (a place here without a pin is matched by name and town instead); else by name
-    and town (the town of the address, else of the area). Dinner Log: name and town, the town being
-    common.town_for(location) when it finds one, else name alone."""
+    and town (the town of the address, else of the area). Dinner Log: name and the town common.town_for(location)
+    finds; a location it can't place in a town means the dinner was elsewhere (unmatched); name alone only when
+    there is no location."""
     if not name:
         return None
     places = con.execute("SELECT id, name, town, lat, lng, wte_id FROM place").fetchall()
@@ -199,7 +200,10 @@ def match(con, source, name, location, extra) -> int | None:
             return _by_town([p for p in named if p["lat"] is None or p["lng"] is None], town) if town else None
         return _by_town(named, town)
     named = [p for p in places if common.names_match(p["name"], name)]
-    return _by_town(named, common.town_for(location, None, None))
+    if not location:
+        return _one(named)
+    town = common.town_for(location, None, None)
+    return _by_town(named, town) if town else None
 
 
 def _past_day(day) -> bool:

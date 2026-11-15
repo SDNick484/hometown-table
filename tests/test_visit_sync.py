@@ -260,11 +260,24 @@ def test_dinner_log_matches_by_name_and_town_any_standing(con, feeds, group, tod
     assert (ledger(con)[0]["status"], ledger(con)[0]["place_id"]) == ("logged", closed)
 
 
-def test_dinner_log_without_a_town_matches_one_place_by_name(con, feeds, group, today):
+def test_dinner_log_without_a_location_matches_one_place_by_name(con, feeds, group, today):
     pho = mk_place(con, "The Pho Example Restaurant", town="Pittsburg")
-    feeds.dl.entries = [dl_visit(1, "2026-11-01", "Pho Example", "the place by the station")]
+    mk_place(con, "Casa Ejemplo", town="Concord")
+    mk_place(con, "Casa Ejemplo", town="Clayton")
+    feeds.dl.entries = [dl_visit(1, "2026-11-01", "Pho Example", None), dl_visit(2, "2026-11-02", "Pho Example", "  "),
+                        dl_visit(3, "2026-11-03", "Casa Ejemplo", None)]           # two places by that name
     visit_sync.run(con)
-    assert ledger(con)[0]["place_id"] == pho
+    assert [(r["status"], r["place_id"]) for r in ledger(con)] == [("logged", pho), ("logged", pho), ("unmatched", None)]
+
+
+def test_dinner_log_somewhere_else_is_unmatched_never_by_name_alone(con, feeds, group, today):
+    mk_place(con, "Casa Ejemplo", town="Concord")
+    feeds.dl.entries = [dl_visit(1, "2026-11-01", "Casa Ejemplo", "San Francisco"),
+                        dl_visit(2, "2026-11-02", "Casa Ejemplo", "the place by the station")]
+    visit_sync.run(con)
+    assert [r["status"] for r in ledger(con)] == ["unmatched", "unmatched"] and visit_rows(con) == []
+    visit_sync.run(con)                                                  # the retry doesn't match them either
+    assert visit_rows(con) == []
 
 
 def test_ambiguous_and_unknown_are_unmatched_then_matched_on_retry(con, feeds, group, today):

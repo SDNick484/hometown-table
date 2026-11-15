@@ -430,7 +430,8 @@ token is off. `commands/sync_visits.py` (`sync-visits`, exit 1 on error) and `op
   them is a same-day duplicate next time, never a second visit. No transaction is held across HTTP.
 - Matching (any standing): Where to Eat by `place.wte_id` (exactly one), else with a pin by `common.names_match` within
   150 m (a pinless place here by name and town), else by name and town (the address's town, else the area's). Dinner
-  Log by name and `common.town_for(location)`'s town, or name alone when that finds none. Exactly one candidate.
+  Log by name and `common.town_for(location)`'s town; a location it can't place is elsewhere (`unmatched`), and name
+  alone is used only with no location. Exactly one candidate.
 - A failing source doesn't stop the other; its message goes into `meta.sync_error` (`{source: message}`), the run raises
   `SyncError`, and `health.problems` adds "visit sync failed" while a configured source's last run failed.
   `meta.sync_last_<source>` holds the last run's `at`, `status` and counts. 401 and 404 get messages naming the setting.
