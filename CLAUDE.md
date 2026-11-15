@@ -132,7 +132,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 2 (Places, ownership, standing and Past places): planned
 
-- Task 3 (People, tags, export and Settings): planned
+- Task 3 (People, tags, export and Settings): done
 
 - Task 4 (Visits and ratings): planned
 
@@ -162,7 +162,19 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 Not built yet.
 
 ### Task 3: People, tags, export and Settings
-Not built yet.
+- `people.py` (`list`, `get`, `create`, `update`, `deactivate`): names are unique folded (inactive people included), at most
+  40 characters, not `everyone`/`adults`/`kids` ("That name is reserved."), no comma, not all digits. `email` is lowercased,
+  must be in `ADMIN_EMAILS` ("That email isn't an editor.") and unique (409). `deactivate` deletes a person with no visits
+  and otherwise sets `active = 0`; it returns `"deleted"` or `"deactivated"`.
+- `tags.py` (`SEED`, `seed`, `list`, `get`, `create`, `rename`, `update`, `reorder`, `delete`): labels unique folded, at most
+  40 characters; `list` rows carry `places` (how many places have the tag); `delete` returns that count. `reorder(ids)`
+  needs every tag id exactly once. The module defines `list`, so it never calls the builtin. `seed` runs from
+  `routes/settings.py` via `app.INIT_HOOKS` and only when the table is empty.
+- `export.py`: `to_json` (every table but `meta`, keyed by table name, under `tables`) and `to_csv` (one row per visit
+  person; the `note` column is the person's own note; text cells starting `= + - @` get a leading quote).
+- `routes/settings.py`: `/api/people`, `/api/tags` (`PUT /api/tags/order` takes `{"ids": [...]}`), `/api/export.json`,
+  `/api/export.csv`, `GET /api/settings/status` (never any key text: `google_key_set` is a boolean).
+- `static/js/settings.js`: `#/settings`, one screen redrawn from state; delete-tag and remove-person confirm inline.
 
 ### Task 4: Visits and ratings
 Not built yet.

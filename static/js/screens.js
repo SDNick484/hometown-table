@@ -6,7 +6,7 @@
 // (not built yet)
 
 // --- Task 3: Settings ---
-// (not built yet)
+import "./settings.js";
 
 // --- Task 4: Visits ---
 // (not built yet)
