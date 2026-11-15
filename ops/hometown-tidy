@@ -1,0 +1,3 @@
+#!/bin/sh
+# Daily: clear Google data cached for 30 days or more (Google's terms). Installed under /etc/periodic/daily by Task 14.
+exec su -s /bin/sh hometown -c 'python3 /opt/hometown/manage.py tidy'
