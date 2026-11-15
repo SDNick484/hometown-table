@@ -201,6 +201,17 @@ def test_synced_visits_have_the_group_no_ratings_and_the_dish(con, feeds, group,
     assert con.execute("SELECT want_to_try FROM place WHERE id = ?", (pid,)).fetchone()[0] == 0
 
 
+def test_a_back_dated_synced_visit_leaves_a_later_star(con, feeds, group, today):
+    starred = today.t - 86400                                           # starred yesterday, Nov 13
+    old = mk_place(con, "Casa Ejemplo", want_to_try=1, want_since=starred)
+    new = mk_place(con, "Pho Example", want_to_try=1, want_since=starred)
+    feeds.dl.entries = [dl_visit(1, "2025-06-01", "Casa Ejemplo"), dl_visit(2, "2026-11-14", "Pho Example")]
+    visit_sync.run(con)
+    assert [r["status"] for r in ledger(con)] == ["logged", "logged"]
+    stars = {r[0]: (r[1], r[2]) for r in con.execute("SELECT id, want_to_try, want_since FROM place")}
+    assert stars == {old: (1, starred), new: (0, None)}
+
+
 def test_inactive_people_drop_out_of_the_group(con, feeds, group, today):
     mk_place(con, "Casa Ejemplo")
     con.execute("UPDATE person SET active = 0 WHERE id = ?", (group.sam,))

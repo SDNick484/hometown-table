@@ -202,7 +202,8 @@ me_person_id=None)`, `delete`, `get`, `history(...)`, and the scores Task 6 uses
 `liked_by_all`. Rules: `visited_on` defaults to `common.today()` and is never in the future; at least one active
 person, matched by id or folded name, or `"me"` (the `me_person_id` the route passes; none is 400 "Link your email to
 a person in Settings."); a rating is `None` or a whole 1 to 5; everything is checked before anything is written, and
-logging clears `want_to_try` and `want_since` in the same transaction (it doesn't bump the place's `version`). A
+logging clears `want_to_try` and `want_since` in the same transaction (it doesn't bump the place's `version`), unless
+the visit is dated before `common.day_of(want_since)` (LA day): a back-dated visit leaves a later star. A
 person's rating is the one on their latest rated visit (same day: the later-logged visit wins). `routes/visits.py`:
 visit CRUD, `GET /api/visits` (also returns `place`), `GET /api/me`, and `GET /api/visits/people` (the active people
 the form offers). `static/js/visits.js` is `#/p/<id>/visits`.
