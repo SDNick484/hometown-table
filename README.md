@@ -74,7 +74,15 @@ _Lands with Task 9._
 _Lands with Task 10._
 
 ## Lists
-_Lands with Task 11._
+A list is a named source of places: a Reddit thread, a "best tacos" post, a friend's recommendations. Open **Lists**,
+start one (a name, and a link if you like), then paste the places into its page, one per line. Numbers, bullets and
+anything after a dash or colon ("1. Casa Ejemplo - great al pastor") are dropped, and a name pasted twice counts once.
+
+Each line is matched to a place you already have, or looked up on Google Maps within the towns. What it finds goes to
+the **Inbox** for a verdict; nothing becomes a place on its own. A place you set aside earlier comes back to the inbox
+instead of being added again. Lines nothing matched stay on the list's page: retype the name and **Search again**, or
+**Drop** it. Without a Google key every line stays there. A list's page also shows its places, and a place keeps its
+lists after you accept it. Deleting a list leaves its places and inbox candidates alone.
 
 ## Import from Where to Eat
 One time, to seed the inbox from the list you already keep in Where to Eat. In Where to Eat choose **More, Download,
