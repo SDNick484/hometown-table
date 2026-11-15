@@ -152,7 +152,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 12 (Import from Where to Eat): done
 
-- Task 13 (MCP server, stdio and remote): planned
+- Task 13 (MCP server, stdio and remote): done
 
 - Task 14 (Installer, services, backups and health checks): done
 
@@ -355,7 +355,31 @@ holding only name, address, cuisine, phone, website, hours, lat, lng. Dishes, ph
 read into the database. Fixture: `tests/fixtures/where_to_eat/export.json` (invented).
 
 ### Task 13: MCP server (stdio and remote)
-Not built yet.
+`mcp_server.py` (tools), `mcp_http.py` (the `hometown-mcp` service), `mcp_remote.py` (verbatim copy of
+mcp-server-shared's `remote.py`: never edit it here; change it upstream, re-copy, update the two header lines;
+`tests/mcp/test_remote_copy.py` checks the sha). Only these three import `mcp`, `uvicorn`, `starlette` or `anyio`, and
+they never import the app's modules (`mcp_server._fold` is a copy of `common.fold`). They use mcp 2.x's `MCPServer`.
+- `Api(base_url, key, as_email=None)`: urllib to `/api/`; `Authorization: Bearer`, `X-Hometown: 1` on non-GET,
+  `X-Hometown-As` when `as_email` is set. `_send(method, path, data, headers) -> (status, body)` is the one network
+  call (tests replace it). App errors become `AppError` (a `ToolError`) with the app's message plus its extras
+  ("... (duplicate_of: 3)"); 401 is `BAD_KEY`; no connection is `UNREACHABLE`. `healthy()` is the service's
+  `/healthz`: the app answers 200 or 503.
+- `build_server(api, level)`: `READ_TOOLS` always, `WRITE_TOOLS[level]` (`log`: log_visit, set_want_to_try; `all`:
+  also import_places, sort_candidate, set_ownership, set_standing); unknown level is `ValueError`. Every result goes
+  through `scrub()`: keys `added_by`, `by`, `email` dropped and any value that is just an email shown as `(hidden)`
+  (`list_people` turns `email` into `linked`). `place_id_for`: `place_id`, else `GET /api/places?q=&past=1`, an exact
+  folded name beats longer ones, several is refused listing "Name (town, id N)".
+- "Me" over HTTP: `mcp_http.AccessEmail` (outermost ASGI layer) verifies the Access assertion with the same verifier
+  `mcp_remote.AccessMiddleware` uses and puts its email in `scope["hometown.access_email"]`; each tool takes a
+  `Context` and `_api_for` copies the Api with that email. A client's `X-Hometown-As` is never read. Over stdio,
+  `--as EMAIL`.
+- `mcp_http`: `write_level(env) -> (level, warnings)`, `service_key(env, level)` (first of comma-separated keys),
+  `refusal(env, level)` (the write key at `none`; an empty key), `build_http_app(env, verifier=None, api=None)`,
+  `main(env=None)` (2 on a refusal or `mcp_remote.ConfigError`). It runs uvicorn with `mcp_remote.uvicorn_settings`
+  itself rather than `serve_http`, because of `AccessEmail`. With `CF_ACCESS_TEAM_DOMAIN` set and no `MCP_HTTP_BIND`
+  (the init script exports none) it binds `0.0.0.0`, so the tunnel on another host reaches it; else `127.0.0.1`.
+- Tests: `tests/plugins/mcp_api.py` (`flask_api(key, as_email)` runs the Api against the Flask app; fixtures `api`
+  (read key), `api_as_alex`, `api_all`; `tool_names`, `call`, `call_error`). Setup: `docs/mcp-setup.md`.
 
 ### Task 14: Installer, services, backups and health checks
 `installer/build.sh` writes `dist/setup-hometown.sh` (git-ignored): `installer/setup-head.sh` plus a base64 tarball of

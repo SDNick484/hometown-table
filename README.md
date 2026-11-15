@@ -170,7 +170,15 @@ skipped, and the command prints how many of each. Running it again creates nothi
 Where to Eat.
 
 ## MCP
-_Lands with Task 13._
+Ask Claude (claude.ai, Claude Desktop or Claude Code) "where should we go tonight?", "when did we last go to Pho
+Example?" or "log that I went to Casa Ejemplo, five stars". Claude uses the same decider, search and history as the
+app, through the `hometown-mcp` service behind Cloudflare Access: add it once as a custom connector in claude.ai and
+sign in with your Access login. "Me" is whoever signed in, so link each editor's email to a person in **Settings**.
+
+What Claude may change is set on the host with `HOMETOWN_MCP_WRITES`: `none` (the default: it can only look),
+`log` (log visits and star places) or `all` (also import lists, sort the inbox, and change a place's verdict or
+standing, always with a reason). Claude never sees an editor's email. Setup, write levels, key rotation and the stdio
+mode for development are in [docs/mcp-setup.md](docs/mcp-setup.md).
 
 ## Install
 Runs on an Alpine container with OpenRC, next to the other family apps. Build the one-file installer on your
