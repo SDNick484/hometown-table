@@ -71,6 +71,18 @@ def test_crons_are_installed_only_when_the_file_exists():
     assert re.search(r'if \[ -f "\$APP_DIR/ops/\$job" \]; then install -m 755 .*"/etc/periodic/\$c"', head)
 
 
+def test_cron_jobs_that_run_manage_py_load_the_config_first():
+    """Cron doesn't load /etc/conf.d/hometown, and without it DATA_DIR points away from the live database."""
+    jobs = [p for p in sorted(os.listdir(os.path.join(ROOT, "ops"))) if "manage.py" in read(os.path.join(ROOT, "ops", p))]
+    assert jobs, "expected at least the tidy job"
+    for job in jobs:
+        body = read(os.path.join(ROOT, "ops", job))
+        loads = re.search(r'^\[ -f "\$CONF" \] && \. "\$CONF"$', body, re.M)
+        assert "CONF=${CONF:-/etc/conf.d/hometown}" in body and "set -a" in body and loads, f"{job} must load the config"
+        assert loads.start() < body.index("su -s /bin/sh hometown"), f"{job} must load the config before dropping to hometown"
+        assert "su -l" not in body and "su - " not in body, f"{job}: a login shell would drop the exported settings"
+
+
 def test_services_use_supervise_daemon_and_the_right_ports():
     app, mcp = read(INIT_APP), read(INIT_MCP)
     for text in (app, mcp):
