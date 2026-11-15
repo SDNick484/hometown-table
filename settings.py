@@ -1,4 +1,5 @@
-"""Configuration, read once from the environment at import. Complete in Task 1: no later task adds a setting.
+"""Configuration, read once from the environment at import. Complete in Task 1, except the four visit-sync settings
+Task 15 added with the owner's approval.
 Nothing here has a household value as its default. An empty value means the default; a malformed one stops the app
 at start with a ValueError naming the key. On the host the environment comes from /etc/conf.d/hometown.
 
@@ -22,6 +23,10 @@ at start with a ValueError naming the key. On the host the environment comes fro
   SCAN_TILE_KM              scan tile size (1.5); SCAN_MIN_TILE_KM: smallest split of a full tile (0.25)
   SCAN_TYPES                comma-separated Google place types the scan searches (restaurant)
   CLOSURE_CHECK_DAYS        re-check a place's Google business status after this many days (28)
+  DINNER_LOG_URL, DINNER_LOG_TOKEN
+                            Dinner Log's base URL (https://..., no path) and its visit-feed bearer token; either empty
+                            turns that source of synced visits off (Task 15)
+  WTE_URL, WTE_TOKEN        the same for Where to Eat
 
 TZ is not a setting: the app's calendar is always America/Los_Angeles (the process's own TZ is left alone)."""
 import os
@@ -76,6 +81,14 @@ def _bool(name: str, default: bool) -> bool:
     if raw in ("0", "false", "no", "off"):
         return False
     raise ValueError(f"{name} must be 1 or 0")
+
+
+def _url(name: str) -> str:
+    """An http(s) base URL without a trailing slash, or "" when unset."""
+    raw = _raw(name)
+    if raw and not re.fullmatch(r"https?://[^\s/?#]+(/[^\s?#]*)?", raw):
+        raise ValueError(f"{name} must be an http:// or https:// URL")
+    return raw.rstrip("/")
 
 
 def _list(name: str) -> list[str]:
@@ -153,3 +166,12 @@ SCAN_TYPES: tuple[str, ...] = tuple(_list("SCAN_TYPES")) or ("restaurant",)
 CLOSURE_CHECK_DAYS = _int("CLOSURE_CHECK_DAYS", 28, 1)
 
 ENV_KEYS: tuple[str, ...] = tuple(dict.fromkeys(_READ))
+
+# Visit sync (Task 15). Read after ENV_KEYS is taken, so they are listed in SYNC_KEYS instead: tests/conftest.py, which
+# is never edited after Task 1, asserts it sets or unsets every ENV_KEYS key, and tests/plugins/visit_sync.py blanks
+# these four for every test. The installer and init-script checks read both tuples.
+DINNER_LOG_URL = _url("DINNER_LOG_URL")
+DINNER_LOG_TOKEN = _str("DINNER_LOG_TOKEN")
+WTE_URL = _url("WTE_URL")
+WTE_TOKEN = _str("WTE_TOKEN")
+SYNC_KEYS: tuple[str, ...] = tuple(k for k in dict.fromkeys(_READ) if k not in ENV_KEYS)

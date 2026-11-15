@@ -1,5 +1,6 @@
-"""People, tags, exports and the Settings screen's status (spec §6.1, §6.4, §12). The logic is in people.py, tags.py and
-export.py; this module only reads requests and writes answers. Registering the tag seed here runs it at every start."""
+"""People, tags, exports, the Settings screen's status (spec §6.1, §6.4, §12) and its synced-visits section (Task 15).
+The logic is in people.py, tags.py, export.py and visit_sync.py; this module only reads requests and writes answers.
+Registering the tag seed here runs it at every start."""
 import json
 
 from flask import Blueprint, Response, jsonify, request
@@ -11,6 +12,7 @@ import export
 import people
 import settings
 import tags
+import visit_sync
 from access import editor_required
 from common import json_body, text
 
@@ -121,3 +123,33 @@ def status():
         google_usage={"month": common.month_key(), "pro_calls": usage["pro_calls"] if usage else 0,
                       "id_calls": usage["id_calls"] if usage else 0, "max_pro_calls": settings.GOOGLE_MAX_PRO_PER_MONTH},
         me={"email": access.me_email(), "person_id": access.me_person_id(con)})
+
+
+# ---------------------------------------------------------------- synced visits (Task 15)
+@bp.route("/api/sync")
+@editor_required
+def sync_status():
+    return jsonify(visit_sync.status(app.db()))
+
+
+@bp.route("/api/sync/people")
+@editor_required
+def sync_people():
+    return jsonify(people=visit_sync.people(app.db()))
+
+
+@bp.route("/api/sync/people", methods=["PUT"])
+@editor_required
+def sync_people_set():
+    data = json_body()
+    return jsonify(people=visit_sync.set_people(app.db(), data.get("people")))
+
+
+@bp.route("/api/sync/<source>/<ref>/dismiss", methods=["POST"])
+@editor_required
+def sync_dismiss(source, ref):
+    json_body()
+    if source not in visit_sync.SOURCES:
+        raise common.ApiError(404, "No such synced visit.")
+    visit_sync.dismiss(app.db(), source, ref)
+    return jsonify(status="dismissed")

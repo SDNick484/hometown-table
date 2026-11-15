@@ -7,7 +7,7 @@ import db
 
 # Every table except meta (the database's own bookkeeping), in dependency order.
 TABLES = ("person", "tag", "place", "place_tag", "place_event", "visit", "visit_person", "source_list", "list_entry",
-          "candidate", "scan_run", "google_usage")
+          "candidate", "scan_run", "google_usage", "sync_seen")
 CSV_HEADER = ("place", "town", "ownership", "visited_on", "occasion", "person", "rating", "note")
 
 

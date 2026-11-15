@@ -52,6 +52,30 @@ def test_logging_clears_want_to_try(editor, con):
     assert tuple(row) == (0, None)
 
 
+def test_back_dated_visit_leaves_a_later_star(editor, con, clock):
+    clock.set("2026-11-14T18:00")
+    starred = clock.t - 3 * 86400                                       # starred on Nov 11, at 6 pm in Concord
+    pid = mk_place(con, want_to_try=1, want_since=starred)
+    a = mk_person(con, "Alex")
+    assert _post(editor, pid, visited_on="2026-11-10", people=[a]).status_code == 201   # the day before: kept
+    assert tuple(con.execute("SELECT want_to_try, want_since FROM place WHERE id = ?", (pid,)).fetchone()) == (1, starred)
+    assert _post(editor, pid, visited_on="2026-11-11", people=[a]).status_code == 201   # the day it was starred
+    assert tuple(con.execute("SELECT want_to_try, want_since FROM place WHERE id = ?", (pid,)).fetchone()) == (0, None)
+
+
+def test_star_day_is_the_los_angeles_day(editor, con, clock):
+    clock.set_utc("2026-11-15T07:30")                                   # 23:30 on Nov 14 in Concord
+    pid = mk_place(con, want_to_try=1, want_since=clock.t)
+    assert _post(editor, pid, visited_on="2026-11-14", people=[mk_person(con, "Alex")]).status_code == 201
+    assert con.execute("SELECT want_to_try FROM place WHERE id = ?", (pid,)).fetchone()[0] == 0
+
+
+def test_star_without_a_date_is_cleared_by_any_visit(editor, con):
+    pid = mk_place(con, want_to_try=1, want_since=None)
+    assert _post(editor, pid, visited_on="2020-01-01", people=[mk_person(con, "Alex")]).status_code == 201
+    assert con.execute("SELECT want_to_try FROM place WHERE id = ?", (pid,)).fetchone()[0] == 0
+
+
 def test_rejected_visit_leaves_want_to_try_alone(editor, con):
     pid = mk_place(con, want_to_try=1, want_since=100)
     mk_person(con, "Alex")

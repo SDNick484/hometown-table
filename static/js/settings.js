@@ -1,4 +1,5 @@
-// Settings (#/settings): the people, the tags with their occasion switch, what the app is set to, and the exports.
+// Settings (#/settings): the people, the tags with their occasion switch, synced visits (Task 15), what the app is set
+// to, and the exports.
 // One screen, drawn from `state` and redrawn after every change. A failed save shows its message in the section's
 // error slot without redrawing, so what was typed stays.
 import { ApiError, get, send } from "./api.js";
@@ -109,6 +110,70 @@ const renderTags = state => `
       <div><button class="primary" type="submit">Add tag</button></div>
     </form></div>`;
 
+// ---------------------------------------------------------------- synced visits (Task 15)
+// One source's state in words: not set up, failed, waiting for people, never run, or its last run's counts.
+export function syncSourceLine(src) {
+  const last = src.last;
+  if (!src.configured) return `not set up (set ${src.settings.join(" and ")} in /etc/conf.d/hometown)`;
+  if (src.error) return `failed${last ? ` on ${dayOf(last.at)}` : ""}: ${src.error}`;
+  if (!last) return "set up; it runs once a day";
+  if (last.status === "no_people") return `nothing synced on ${dayOf(last.at)}: no one is chosen above`;
+  return `${dayOf(last.at)}: ${last.new} new, ${last.logged} logged, ${last.duplicate} already logged, ${last.unmatched} unmatched`;
+}
+
+// "Nov 1, 2026 · Lafayette · Dinner Log"
+export const unmatchedLine = u => [fmtDate(u.day) || u.day, u.location, u.label].filter(Boolean).join(" · ");
+
+const renderSyncBox = (person, chosen) => `
+  <label class="check"><input type="checkbox" name="sync-person" value="${esc(person.id)}"${esc(chosen.includes(person.id) ? " checked" : "")}>
+  <span>${esc(person.name)}</span></label>`;
+
+const renderSyncBoxes = (people, chosen) => people.map(p => renderSyncBox(p, chosen)).join("");
+
+function renderSyncPeople(state) {
+  const active = state.people.filter(p => p.active);
+  if (!active.length) return `<p class="hint">Add people above first.</p>`;
+  return `
+    <form class="form" data-form="sync-people">
+      <div class="row">${renderSyncBoxes(active, state.sync.people)}</div>
+      <div><button class="primary" type="submit">Save</button></div>
+    </form>`;
+}
+
+const renderSyncNotice = sync =>
+  (sync.people.length ? "" : `<p class="notice" role="status">Pick who usually goes: until then nothing is synced.</p>`);
+
+const renderSyncSources = sync => sync.sources.map(s => renderFact(`${s.label}:`, syncSourceLine(s))).join("");
+
+const renderUnmatchedRow = u => `
+  <div class="spread" data-unmatched="${esc(u.source)}:${esc(u.ref)}">
+    <div><strong>${esc(u.name || "(no name)")}</strong><div class="small muted">${esc(unmatchedLine(u))}</div></div>
+    <button type="button" data-act="dismiss-sync" data-source="${esc(u.source)}" data-ref="${esc(u.ref)}">Dismiss</button>
+  </div>`;
+
+function renderUnmatched(sync) {
+  if (!sync.unmatched.length) return `<p class="hint">Nothing waiting for a place.</p>`;
+  return `<div class="rows">${renderUnmatchedRows(sync.unmatched)}</div>`;
+}
+
+const renderUnmatchedRows = rows => rows.map(renderUnmatchedRow).join("");
+
+const renderSync = state => `
+  <div data-section="sync">
+  <div class="section-h"><h2>Synced visits</h2></div>
+  <p class="hint">Once a day, the restaurant visits recorded in Dinner Log and Where to Eat are logged here at the
+  matching place, with the people ticked below and no ratings: rate them yourselves, and edit a visit when someone else
+  went. Later changes or deletions in those apps are not copied.</p>
+  <div class="stack">
+  <div data-error="sync"></div>
+  ${renderSyncNotice(state.sync)}
+  ${renderSyncPeople(state)}
+  <div class="facts">${renderSyncSources(state.sync)}</div>
+  <div><h3>Waiting for a place</h3>
+  <p class="hint">No single place here matched these. Add the place and the next run logs the visit, or dismiss it.</p></div>
+  ${renderUnmatched(state.sync)}
+  </div></div>`;
+
 // ---------------------------------------------------------------- status and export
 const renderFact = (name, value) => `<div><span class="muted">${esc(name)}</span> ${esc(value)}</div>`;
 
@@ -149,18 +214,21 @@ const renderSettings = state => `
   <h1>Settings</h1>
   ${renderPeople(state)}
   ${renderTags(state)}
+  ${renderSync(state)}
   ${renderStatus(state.status)}
   ${renderExport()}`;
 
 // ---------------------------------------------------------------- the screen
 async function render(ctx) {
-  const state = { people: [], tags: [], status: null, editing: null, asking: null };
+  const state = { people: [], tags: [], status: null, sync: null, editing: null, asking: null };
 
   async function load() {
-    const [p, t, s] = await Promise.all([get("/api/people?inactive=1"), get("/api/tags"), get("/api/settings/status")]);
+    const [p, t, s, sync] = await Promise.all([get("/api/people?inactive=1"), get("/api/tags"), get("/api/settings/status"),
+      get("/api/sync")]);
     state.people = p.people;
     state.tags = t.tags;
     state.status = s;
+    state.sync = sync;
   }
   const draw = () => {
     ctx.view.innerHTML = renderSettings(state);
@@ -216,6 +284,8 @@ async function render(ctx) {
         return change("tags", () => send("POST", "/api/tags", { label: f.get("label"), occasion: f.get("occasion") === "on" }), "Tag added");
       case "tag-edit":
         return change("tags", () => send("PATCH", `/api/tags/${id}`, { label: f.get("label") }), "Saved");
+      case "sync-people":
+        return change("sync", () => send("PUT", "/api/sync/people", { people: f.getAll("sync-person").map(Number) }), "Saved");
     }
   });
 
@@ -236,6 +306,10 @@ async function render(ctx) {
           toast(r.result === "deleted" ? "Person deleted" : "Person made inactive");
         });
       case "delete": return change("tags", () => send("DELETE", `/api/tags/${id}`), "Tag deleted");
+      case "dismiss-sync": {
+        const path = `/api/sync/${encodeURIComponent(btn.dataset.source)}/${encodeURIComponent(btn.dataset.ref)}/dismiss`;
+        return change("sync", () => send("POST", path), "Dismissed");
+      }
       case "up":
       case "down": {
         const ids = tagMove(id, btn.dataset.act === "up" ? -1 : 1);

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "visits": [
+    {"ref": "45", "day": "2026-11-08", "name": "Taqueria Ejemplo", "location": "Walnut Creek", "place_id": 7,
+     "address": "100 Example Street, Walnut Creek, CA 94596", "lat": 37.9101, "lng": -122.0652},
+    {"ref": "46", "day": "2026-11-12", "name": "Noodle Example", "location": null, "place_id": 9, "address": null,
+     "lat": null, "lng": null}
+  ],
+  "next": 46
+}

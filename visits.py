@@ -172,7 +172,8 @@ def _write_people(con, visit_id, people):
 # ---------------------------------------------------------------- writing
 def log(con, place_id, data, by, me_person_id) -> int:
     """Save a visit and clear want_to_try on the place, in one transaction. Returns the visit id. Everything is
-    checked before anything is written, so a 400 leaves no visit behind."""
+    checked before anything is written, so a 400 leaves no visit behind. A back-dated visit (before the LA day of
+    want_since) leaves a later star alone: the place was starred after that visit."""
     if not isinstance(data, dict):
         raise ApiError(400, "Expected a JSON object.")
     on = _visit_date(data.get("visited_on"))
@@ -186,8 +187,10 @@ def log(con, place_id, data, by, me_person_id) -> int:
         vid = con.execute("INSERT INTO visit (place_id, visited_on, occasion, note, added_by, created_at) "
                           "VALUES (?, ?, ?, ?, ?, ?)", (place_id, on, occasion, note, by, now)).lastrowid
         _write_people(con, vid, people)
-        con.execute("UPDATE place SET want_to_try = 0, want_since = NULL, updated_at = ? "
-                    "WHERE id = ? AND want_to_try = 1", (now, place_id))
+        star = con.execute("SELECT want_to_try, want_since FROM place WHERE id = ?", (place_id,)).fetchone()
+        if star["want_to_try"] and (star["want_since"] is None or on >= common.day_of(star["want_since"])):
+            con.execute("UPDATE place SET want_to_try = 0, want_since = NULL, updated_at = ? WHERE id = ?",
+                        (now, place_id))
     return vid
 
 

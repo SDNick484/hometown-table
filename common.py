@@ -137,13 +137,18 @@ def now() -> int:
     return int(time.time())
 
 
-def _local() -> datetime:
-    return datetime.fromtimestamp(now(), ZoneInfo(settings.TZ))
+def _local(epoch: int | None = None) -> datetime:
+    return datetime.fromtimestamp(now() if epoch is None else epoch, ZoneInfo(settings.TZ))
 
 
 def today() -> str:
     """Today as YYYY-MM-DD in America/Los_Angeles: a visit at 11:30 pm is that day in Concord, not tomorrow in UTC."""
     return _local().date().isoformat()
+
+
+def day_of(epoch: int) -> str:
+    """The YYYY-MM-DD calendar day in America/Los_Angeles of an epoch-seconds timestamp (as today() reads now())."""
+    return _local(epoch).date().isoformat()
 
 
 def month_key() -> str:

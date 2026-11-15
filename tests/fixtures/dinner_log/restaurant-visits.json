@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "visits": [
+    {"ref": "101", "day": "2026-11-07", "name": "Casa Ejemplo", "location": "Concord", "dish": "mole enchiladas"},
+    {"ref": "102", "day": "2026-11-10", "name": "Pho Example", "location": null, "dish": null}
+  ],
+  "next": 102
+}

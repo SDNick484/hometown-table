@@ -108,6 +108,7 @@ input[type=checkbox], input[type=radio] { width: 20px; height: 20px; min-height:
 label.f { display: flex; flex-direction: column; gap: var(--space-xxs); font-size: 14px; line-height: 20px; color: var(--ink); }
 label.check { display: inline-flex; flex-direction: row; align-items: center; gap: var(--space-xs); font-size: 16px; color: var(--ink); }
 .form { display: grid; gap: var(--space-s); }
+.stack { display: grid; gap: var(--space-s); min-width: 0; }
 .grid2 { display: grid; gap: var(--space-s); grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); }
 .hint { font-size: 12px; line-height: 20px; color: var(--text-2); }
 .msg.error, .notice.error { border-left: 4px solid var(--danger); padding: 12px var(--space-s); background: var(--well); }

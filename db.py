@@ -3,7 +3,8 @@
 Connections run in autocommit mode (isolation_level=None): a single statement commits on its own, and anything that
 must be atomic runs inside `with transaction(con):`. Every schema change adds a step to MIGRATIONS and bumps
 SCHEMA_VERSION (kept in PRAGMA user_version); migrate() is idempotent and runs at every start, so the host never needs
-a manual database step. Task 1 creates the whole v1 schema; no other task changes it (plan: Constraints).
+a manual database step. Task 1 created the whole v1 schema; v2 (Task 15, approved by the owner) adds the visit-sync
+ledger. A fresh database runs every step in order: v1, then v2.
 
 Timestamps are integer epoch seconds; dates are YYYY-MM-DD in America/Los_Angeles (common.today()). Connections
 carry the SQL function fold(text), common.fold: `WHERE fold(name) LIKE ?` is accent- and case-insensitive."""
@@ -13,7 +14,7 @@ from contextlib import contextmanager
 
 import common
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Version 1. A deployed database is created from this text: never edit it, add a step to MIGRATIONS instead.
 # Statements are separated by ";" and contain none themselves: see _statements().
@@ -174,6 +175,29 @@ CREATE TABLE google_usage (
 """
 
 
+# Version 2 (Task 15): the ledger of feed entries visit_sync.py has seen, one row per (source, ref), which is what makes
+# a synced visit "exactly once": a ref in it is never logged again, even after its visit is deleted here (visit_id
+# goes NULL, the row stays). `extra` is JSON (Dinner Log: dish; Where to Eat: place_id, address, lat, lng). Every
+# statement is IF NOT EXISTS, so the step is idempotent on its own as well as through user_version.
+V2 = """
+CREATE TABLE IF NOT EXISTS sync_seen (
+  source TEXT NOT NULL CHECK (source IN ('dinner_log', 'where_to_eat')),
+  ref TEXT NOT NULL,
+  day TEXT,
+  name TEXT,
+  location TEXT,
+  extra TEXT,
+  status TEXT NOT NULL CHECK (status IN ('logged', 'duplicate', 'unmatched', 'dismissed')),
+  place_id INTEGER REFERENCES place (id) ON DELETE SET NULL,
+  visit_id INTEGER REFERENCES visit (id) ON DELETE SET NULL,
+  seen_at INTEGER,
+  PRIMARY KEY (source, ref));
+CREATE INDEX IF NOT EXISTS sync_seen_status ON sync_seen (status, source);
+CREATE INDEX IF NOT EXISTS sync_seen_visit ON sync_seen (visit_id);
+CREATE INDEX IF NOT EXISTS sync_seen_place ON sync_seen (place_id)
+"""
+
+
 def _statements(script):
     # Not executescript(): it commits any open transaction first, which would split a migration in two.
     return [s.strip() for s in script.split(";") if s.strip()]
@@ -224,7 +248,12 @@ def _to_v1(con):
     con.execute("INSERT INTO meta (key, value) VALUES ('created_at', ?)", (str(common.now()),))
 
 
-MIGRATIONS = {1: _to_v1}  # version -> the step that brings version-1 up to it
+def _to_v2(con):
+    for stmt in _statements(V2):
+        con.execute(stmt)
+
+
+MIGRATIONS = {1: _to_v1, 2: _to_v2}  # version -> the step that brings version-1 up to it
 
 
 def _version(con):

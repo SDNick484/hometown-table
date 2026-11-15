@@ -215,3 +215,20 @@ Logs: `/var/log/hometown.log`, `/var/log/hometown-mcp.log`, `/var/log/ct210-ops.
 database each night in `/var/backups/ct210/<date>/hometown.db.gz`, kept `KEEP_DAYS` days. To restore, stop the service,
 remove `hometown.db-wal` and `hometown.db-shm`, `gzip -dc hometown.db.gz > /var/lib/hometown/hometown.db`,
 `chown hometown:hometown` it, and start the service.
+
+## Synced visits
+Once a day the app pulls the restaurant visits recorded in Dinner Log (a restaurant dinner) and Where to Eat (**We
+went**) and logs each one here, once, at the matching place: by Where to Eat's own id for the place, else by name near
+its map pin, else by name and town. Synced visits have no ratings and list the people ticked under **Settings, Synced
+visits**: rate them yourselves, and edit a visit here when someone else went. A visit already logged here at that place
+on that day is linked instead of logged twice, and a deleted synced visit stays deleted. Edits or deletions made later
+in Dinner Log or Where to Eat are not copied over.
+
+Visits that match no single place wait under **Waiting for a place**: add the place and the next run logs them, or
+**Dismiss** them. The first run imports each app's whole history.
+
+To turn it on, set each app's feed token there, then `vim /etc/conf.d/hometown` and set `DINNER_LOG_URL` and
+`DINNER_LOG_TOKEN`, and `WTE_URL` and `WTE_TOKEN` (the same tokens), `rc-service hometown restart`, and pick the people
+in Settings. A source without a URL or token is off. The daily job is `/etc/periodic/daily/hometown-sync`; to run it
+now, as root: `/etc/periodic/daily/hometown-sync` (it logs to `/var/log/ct210-ops.log`). While a configured source's
+last run failed, `/healthz` reports "visit sync failed" and Settings shows why.
