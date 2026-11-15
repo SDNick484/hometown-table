@@ -155,11 +155,14 @@ lists after you accept it. Deleting a list leaves its places and inbox candidate
 
 ## Import from Where to Eat
 One time, to seed the inbox from the list you already keep in Where to Eat. In Where to Eat choose **More, Download,
-JSON**, copy the file to the host, and run as the `hometown` user:
+JSON**, copy the file to the host (somewhere the `hometown` user can read, such as `/tmp`), and run as root:
 
 ```
-python3 /opt/hometown/manage.py import-where-to-eat export.json
+set -a; . /etc/conf.d/hometown; set +a
+su -s /bin/sh hometown -c 'cd /opt/hometown && python3 manage.py import-where-to-eat /tmp/export.json'
 ```
+
+The first line loads the app's settings (only root can read them), so the import writes to the app's own database.
 
 Open places in the eight towns (by map pin, or by the town named in their area) land in the Inbox as new candidates.
 Closed places, places elsewhere, and places already here (same Where to Eat id, or the same name within 150 m) are
