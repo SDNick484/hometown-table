@@ -1,0 +1,9 @@
+[
+ {"place_id": 1, "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://www.openstreetmap.org/copyright", "osm_type": "node", "osm_id": 1001, "lat": "37.9781", "lon": "-122.0312", "category": "amenity", "type": "restaurant", "place_rank": 30, "importance": 0.3, "addresstype": "amenity", "name": "Casa Ejemplo", "display_name": "Casa Ejemplo, 100, Example Street, Concord, Contra Costa County, California, 94520, United States",
+  "address": {"amenity": "Casa Ejemplo", "house_number": "100", "road": "Example Street", "city": "Concord", "county": "Contra Costa County", "state": "California", "postcode": "94520", "country": "United States", "country_code": "us"},
+  "extratags": {"cuisine": "mexican", "phone": "+1 555 0100", "website": "https://casa.example.com", "opening_hours": "Mo-Su 11:00-21:00"},
+  "boundingbox": ["37.9780", "37.9782", "-122.0313", "-122.0311"]},
+ {"place_id": 2, "osm_type": "way", "osm_id": 2002, "lat": "37.9482", "lon": "-122.0610", "category": "amenity", "type": "fast_food", "name": "Chain Burger Example", "display_name": "Chain Burger Example, Sample Avenue, Pleasant Hill, California, United States",
+  "address": {"amenity": "Chain Burger Example", "road": "Sample Avenue", "city": "Pleasant Hill", "state": "California", "country_code": "us"},
+  "extratags": {"brand": "Chain Burger"}, "boundingbox": ["37.9481", "37.9483", "-122.0611", "-122.0609"]}
+]

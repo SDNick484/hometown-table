@@ -142,7 +142,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 7 (Google Places client and the monthly cap): planned
 
-- Task 8 (OpenStreetMap client): planned
+- Task 8 (OpenStreetMap client): done
 
 - Task 9 (The weekly scan): planned
 
@@ -177,7 +177,16 @@ Not built yet.
 Not built yet.
 
 ### Task 8: OpenStreetMap client
-Not built yet.
+`osm.py` (no key; credit "© OpenStreetMap contributors" wherever OSM data shows). A box is `(south, west, north, east)`.
+A place dict is `{ref "node/123", name, address, lat, lng, cuisine, phone, website, opening_hours, is_chain}`;
+`is_chain` is `brand` or `brand:wikidata` set.
+- `food_places(bbox)`: one Overpass POST (`out center tags`); elements with no name or pin are dropped.
+- `match(name, lat, lng, elements)`: nearest within 100 m whose name `common.names_match`es, else None.
+- `search(name, bbox)`: Nominatim, `bounded=1` to the box, same shape (add-by-hand).
+- `geocode(address, town)`: Nominatim, then Photon (also when Nominatim errors); None if neither knows it.
+- A failed call raises `common.UpstreamError`, never an empty list; callers decide. All calls send
+  `User-Agent: HometownTable/1 (+https://github.com/SDNick484/hometown-table)`.
+- Tests: `overpass_el(ref, name, lat, lng, **tags)` in `tests/plugins/osm.py`; fixtures in `tests/fixtures/osm/`.
 
 ### Task 9: The weekly scan
 Not built yet.

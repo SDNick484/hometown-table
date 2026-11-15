@@ -1,0 +1,10 @@
+{"version": 0.6, "generator": "Overpass API", "osm3s": {"timestamp_osm_base": "2026-11-14T00:00:00Z", "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."},
+ "elements": [
+  {"type": "node", "id": 1001, "lat": 37.9781, "lon": -122.0312,
+   "tags": {"amenity": "restaurant", "name": "Casa Ejemplo", "cuisine": "mexican;tex-mex", "addr:housenumber": "100", "addr:street": "Example Street", "addr:city": "Concord", "addr:state": "CA", "addr:postcode": "94520", "phone": "+1 555 0100", "website": "https://casa.example.com", "opening_hours": "Mo-Su 11:00-21:00"}},
+  {"type": "way", "id": 2002, "center": {"lat": 37.9482, "lon": -122.0610}, "nodes": [1, 2, 3],
+   "tags": {"amenity": "fast_food", "name": "Chain Burger Example", "brand": "Chain Burger", "brand:wikidata": "Q0000000", "addr:street": "Sample Avenue", "contact:phone": "+1 555 0101", "contact:website": "https://chain.example.com"}},
+  {"type": "node", "id": 3003, "lat": 37.9100, "lon": -122.0650,
+   "tags": {"shop": "bakery", "name": "Pan Ejemplo"}},
+  {"type": "node", "id": 4004, "lat": 37.9000, "lon": -122.0000, "tags": {"amenity": "cafe"}}
+ ]}
