@@ -131,10 +131,8 @@ async function render(ctx) {
     try {
       await call();
     } catch (e) {
-      if (!(e instanceof ApiError) || e.status !== 204) {
-        if (ctx.alive()) showError(e instanceof ApiError ? e.error : "Something went wrong. Try again.");
-        return;
-      }
+      if (ctx.alive()) showError(e instanceof ApiError ? e.error : "Something went wrong. Try again.");
+      return;
     }
     toast(done);
     if (ctx.alive()) done === "Deleted" ? (location.hash = "#/past") : ctx.rerender();
