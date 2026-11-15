@@ -1,0 +1,24 @@
+#!/bin/sh
+# Weekly: the discovery scan (spec 8.2). Installed under /etc/periodic/weekly by setup-hometown.sh; runs as root and
+# drops to the hometown user. Its settings (the Google key, DATA_DIR, the scan settings) are in /etc/conf.d/hometown,
+# which only root can read: they are exported here and reach the scan through su's environment (su without -l keeps
+# it), never on a command line. A failed run is also recorded in scan_run.error, which /healthz reports to the CT 210
+# health check. CONF and LOG may be overridden for a test run.
+set -u
+CONF=${CONF:-/etc/conf.d/hometown}
+LOG=${LOG:-/var/log/ct210-ops.log}
+log() { echo "$(date '+%F %T') hometown-scan: $*" >> "$LOG" 2>/dev/null || true; }
+
+set -a
+# shellcheck source=/dev/null
+[ -f "$CONF" ] && . "$CONF"
+set +a
+DATA_DIR=${DATA_DIR:-/var/lib/hometown}
+export DATA_DIR
+
+if out=$(su -s /bin/sh hometown -c 'cd /opt/hometown && exec python3 manage.py scan' 2>&1); then
+  log "$out"
+else
+  log "FAILED: $out"
+  exit 1
+fi

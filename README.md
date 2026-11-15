@@ -68,7 +68,30 @@ that says so. Asking Claude to "log that I went" works the same way.
 _Lands with Task 6._
 
 ## Discovery
-_Lands with Task 9._
+Once a week the host searches Google Maps for restaurants in each town and sorts what it finds into the Inbox. It
+needs `GOOGLE_PLACES_KEY` in `/etc/conf.d/hometown`; without one the scan is off and everything else works.
+
+- Each town's box (its centre, plus or minus `TOWN_RADIUS_KM`) is searched in squares of `SCAN_TILE_KM` for every
+  type in `SCAN_TYPES`. These searches are free. A square with more results than Google will list is searched again in
+  quarters, down to `SCAN_MIN_TILE_KM`.
+- A place you already have, or one you dismissed, is never offered again. A place found near one you added by hand or
+  imported from Where to Eat, with a matching name, is joined to it instead.
+- Each new find costs one Google lookup (its name, address and pin), then is matched to OpenStreetMap, whose details
+  are what get kept. Brand-name chains go to "Hidden as chains". © OpenStreetMap contributors.
+- The first scan fills the Backlog, not New: everything that was already in town. From then on, what a scan finds is
+  New.
+- Lookups stop at `GOOGLE_MAX_PRO_PER_MONTH` (3,000) a month, shared with the closure checks and the Inbox. The first
+  scan may find more than that: the rest wait, out of sight, and the next month's scans fill them in.
+- Every `CLOSURE_CHECK_DAYS` (28) each place is checked with Google. Closed or temporarily closed puts a flag on the
+  place for you to confirm or dismiss; a dismissed flag stays away until Google says something different.
+
+Settings shows the last scan. To run one now, as root (the cron job does the same):
+
+```
+/etc/periodic/weekly/hometown-scan; tail -n 1 /var/log/ct210-ops.log
+```
+
+A failed scan is reported by `/healthz` (and the CT 210 health check); the next run carries on where it stopped.
 
 ## Inbox
 _Lands with Task 10._

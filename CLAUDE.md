@@ -144,7 +144,7 @@ deploy/             deploy.env.example (deploy.env is git-ignored)
 
 - Task 8 (OpenStreetMap client): done
 
-- Task 9 (The weekly scan): planned
+- Task 9 (The weekly scan): done
 
 - Task 10 (Inbox, flags and Add place): planned
 
@@ -246,7 +246,33 @@ A place dict is `{ref "node/123", name, address, lat, lng, cuisine, phone, websi
 - Tests: `overpass_el(ref, name, lat, lng, **tags)` in `tests/plugins/osm.py`; fixtures in `tests/fixtures/osm/`.
 
 ### Task 9: The weekly scan
-Not built yet.
+`scan.py` (`box`, `tiles`, `split`, `side_km`, `run`, `place_closure_flag`); `commands/scan.py` (`scan`, exit 1 on error,
+0 with a message when there is no key); `ops/hometown-scan` (weekly, root sources `/etc/conf.d/hometown` with `set -a`
+and `su`s to `hometown`, so the key travels in the environment; output to `/var/log/ct210-ops.log`).
+- `run(con, now=None)` returns the `scan_run` row, or None without a key (no row, no call). Order: search every tile x
+  `SCAN_TYPES` (`textQuery` is the type with `_` as a space); a tile returning 60 is split while a quarter is at least
+  `SCAN_MIN_TILE_KM`; moves; unknown ids become `pending`; pending rows newest first get `google.details` until
+  `CapReached`, then OSM match, then attach, else `chain_hidden` / `backlog` / `new`; then the closure check.
+- Candidate statuses: `pending` (found, no details yet: the inbox must hide it), `backlog` (`first_seen_at` <=
+  `meta.baseline_at`, or no baseline yet), `new`, `chain_hidden` (the OSM match has `brand`/`brand:wikidata`). A
+  pending row that already has `g_*` (a run failed after buying them) is sorted without a new call. A 404 deletes it.
+- Stored on a sorted candidate: `g_*` + `g_fetched_at`; `osm_ref`, `osm_name`, `osm_address`, `osm_lat`, `osm_lng`,
+  `osm_extra` (JSON `{cuisine, phone, website, opening_hours}`), `chain_hint`.
+- Attach (within 150 m, `common.names_match`, nearest): an id-less place with a pin gets `google_place_id`, `osm_ref`
+  if it had none, `closure_checked_at` and the closure flag from the same details; else an id-less, not `accepted`
+  `where_to_eat` candidate (pin from `wte_json`) gets the id, `g_*` and OSM fields and keeps its status. The pending
+  row is deleted.
+- `meta.baseline_at` (epoch seconds, text) is set once, by the first run that finishes; a run hitting the cap still
+  finishes. `scan_run`: `tiles` (searches of a tile x type), `search_calls` (Text Search pages, from `id_calls`),
+  `detail_calls` (Pro calls made, closure checks included), `new_candidates` (ids first seen and still candidates).
+  An error is stored (max 500 characters; `finished_at` set too) and re-raised; work done before it stays.
+- Overpass: at most one `osm.food_places` per town box per run, only for boxes a pending candidate falls in (100 m
+  margin); `OSM_PAUSE_S` between queries; one retry after `OSM_RETRY_S`. `scan.sleep` is what tests replace.
+- `place_closure_flag(con, place_id, status)`: one `UPDATE`, no transaction of its own, no `version` bump. A closed
+  status sets `closure_flag` unless `closure_dismissed` is that status or the standing already says it (`closed`; or
+  `temp_closed` for a temporary closure). `OPERATIONAL` clears `closure_dismissed` and an unconfirmed flag.
+- Closure check: places with an id whose `closure_checked_at` is null or older than `CLOSURE_CHECK_DAYS` (12 h slack
+  so weekly runs keep 28 days at 4 weeks), never-checked first; `closure_checked_at` is the run's start.
 
 ### Task 10: Inbox, flags and Add place
 Not built yet.
