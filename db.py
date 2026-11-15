@@ -8,6 +8,7 @@ a manual database step. Task 1 creates the whole v1 schema; no other task change
 Timestamps are integer epoch seconds; dates are YYYY-MM-DD in America/Los_Angeles (common.today()). Connections
 carry the SQL function fold(text), common.fold: `WHERE fold(name) LIKE ?` is accent- and case-insensitive."""
 import sqlite3
+import time
 from contextlib import contextmanager
 
 import common
@@ -185,8 +186,24 @@ def connect(path) -> sqlite3.Connection:
     con.create_function("fold", 1, common.fold, deterministic=True)
     con.execute("PRAGMA foreign_keys = ON")
     con.execute("PRAGMA busy_timeout = 10000")
-    con.execute("PRAGMA journal_mode = WAL")
+    _use_wal(con)
     return con
+
+
+def _use_wal(con, wait=10.0):
+    """Switch to WAL unless the file already is. Switching takes an exclusive lock, and SQLite answers "database is
+    locked" at once instead of calling the busy handler, so two workers opening a new file at the same moment would
+    fail: retry within the same 10 s the busy timeout allows."""
+    deadline = time.monotonic() + wait
+    while True:
+        try:
+            if con.execute("PRAGMA journal_mode").fetchone()[0] != "wal":
+                con.execute("PRAGMA journal_mode = WAL")
+            return
+        except sqlite3.OperationalError as e:
+            if "locked" not in str(e) or time.monotonic() >= deadline:
+                raise
+            time.sleep(0.02)
 
 
 @contextmanager
